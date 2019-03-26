@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-amp4hefDir=/home/user0/repos/amp4hef
+amp4hefDir=/home/milczare_1149070/hameren-amp4hef-a99e70cc8d07
 srcDir=$amp4hefDir/src
 buildDir=$amp4hefDir/build
 compiler="gfortran"
@@ -55,8 +55,7 @@ function create_source {
     $srcDir/amp4hef_io.f03 \
     $srcDir/amp4hef_qomentum.f03 \
     $srcDir/amp4hef_aux.f03 \
-    $srcDir/amp4hef_ng.f03 \
-    $srcDir/amp4hef_qq.f03 \
+    $srcDir/amp4hef_DrellYan.f03 \
     $srcDir/amp4hef_main.f03 \
     > $buildDir/amp4hef.f03
   sed -i -e"s|\!(path_tbldir\!)|'$buildDir/'|" $buildDir/amp4hef.f03

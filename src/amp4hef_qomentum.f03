@@ -1,56 +1,3 @@
-!
-! This module must be initialized with
-!   call init_qomentum
-!
-! Given vectors a(0:3) and b(0:3), both real or both complex of kind=fltknd,
-! and satisfying  a.b=0  , while  b  must be light-like b.b=0  ,
-! a qomentum_type Q can be constructed with
-!   call Q%fill( a ,b )
-! This will provide components of Q
-!   Q%k : the momentum a as a bi-spinor
-!   Q%p : the momentum b as a bi-spinor
-!   Q%sqrL , Q%Rsqr : [p| , |p]
-!   Q%angL , Q%Rang : <p| , |p>
-!   Q%kstr : <p|k_slash|q]/[pq] , which is independent of q
-!   Q%kapp : <q|k_slash|p]/<qp> , which is independent of q
-! These components can be multiplied as, for example
-!   Q1%angL * ( Q2%k + Q3%p ) * Q4%Rsqr = <p1|k2_slash+p3_slash|p4]
-! Also the following functions are available:
-!   twodot( Q1%k ,Q2%p ) = 2*k1.p2
-!   square( Q1%k ) = k1.k1
-! If  Q%fill( a )  is called with only one argument, then  a  must be 
-! light-like, and one will have  k=p .
-!
-! The types for Q%k,Q%p (slashed_type) and for Q%sqrL etc. (see below) are
-! also provided, and these objects can, within type, be added, subtracted,
-! and can be multiplied with a complex number.
-! There are also some conversion functions for the diffent spinors
-! available (L_from_R, R_from_L, conj), see below in this source file.
-!
-! A list of qomentum_type can be organized as a
-!   type(qomentum_list_type) :: T
-! like
-!   call T%Q(1)%fill( a1 ,b1 )
-!   call T%Q(2)%fill( a2 ,b2 )
-! etc. Then, the user has available the methods, taking integer arguments
-!   T%sqr(i,j) = [ij]
-!   T%ang(i,j) = <ij>
-!   T%ang(i,a,j) = <i|slash(k_a)|j]
-!   T%sqr(i,a,j) = [i|slash(k_a)|j>
-!   T%ang(i,a,b,j) = <i|slash(k_a)*slash(k_b)|j>
-!   T%sqr(i,a,b,j) = [i|slash(k_a)*slash(k_b)|j]
-!   T%ang(i,[a,b],j) = <i|slash(k_a)+slash(k_b)|j]
-!   T%ang(i,[a,...,b],j) = <i|slash(k_a)+...+slash(k_b)|j]
-!   T%ang(i,c,[a,...,b],j) = <i|slash(k_c)*(slash(k_a)+...+slash(k_b))|j]
-!   T%ang(i,[a,...,b],c,j) = <i|(slash(k_a)+...+slash(k_b))*slash(k_c)|j]
-!   T%ang(i,[a,...,b],[c,...,d],j) = ok you get the picture
-!   T%sqr the equivalent of the above
-! The second argument a in  T%ang(i,a,j)  and  T%sqr(i,a,j)  may also be
-! an "external" slashed_type.
-! The qomentum_list_type has some more components and procedure pointers
-! to let it represent an amplitude, and some methods for BCFW recursion.
-!
-!
 module amp4hef_qomentum
   implicit none
   private
@@ -103,16 +50,15 @@ module amp4hef_qomentum
     logical :: lightlike
   contains
     procedure :: qom_fill_r
-    procedure :: qom_fill_c
     procedure :: qom_fill_sl
-    generic :: fill=>qom_fill_r,qom_fill_c,qom_fill_sl
+    generic :: fill=>qom_fill_r,qom_fill_sl
     procedure :: minus=>qom_minus
     procedure :: prnt=>qom_prnt
   end type
 
   type :: qomentum_list_type
     integer :: Ntot,Noff
-    integer :: onshell(NsizeProc),offshell(2)
+    integer :: onshell(NsizeProc),offshell(2), Z
     integer :: Nflavor(-NsizeFlavor:NsizeFlavor)
     integer :: flavor(NsizeProc,-NsizeFlavor:NsizeFlavor)
     integer :: symFac,sizeHel,sizePerm
@@ -161,10 +107,10 @@ module amp4hef_qomentum
     module procedure sqrL_c ,Rsqr_c ,angL_c ,Rang_c ,slash_c
   end interface
   interface operator (+)
-    module procedure plus_sl_sl,plus_angL,plus_Rang,plus_sqrL,plus_Rsqr
+    module procedure plus_sl_sl
   end interface
   interface operator (-)
-    module procedure minus_sl_sl,minus_angL,minus_Rang,minus_sqrL,minus_Rsqr
+    module procedure minus_sl_sl
   end interface
 
   interface square
@@ -173,17 +119,6 @@ module amp4hef_qomentum
 
   interface twodot
     module procedure twodot_sl_sl
-  end interface
-
-  interface L_from_R
-    module procedure L_from_R_ang,L_from_R_sqr
-  end interface
-  interface R_from_L
-    module procedure R_from_L_ang,R_from_L_sqr
-  end interface
-
-  interface conj
-    module procedure conj_angL,conj_Rang,conj_sqrL,conj_Rsqr
   end interface
 
 
@@ -229,15 +164,10 @@ contains
 
 
   subroutine qom_fill_r( obj ,momentum ,direction )
-! momentum is set to light-like if no direction is given.
-! If provided, direction must be ligh-like and its inner product
-! with momentum must vanish.
   class(qomentum_type) :: obj
   real(fltknd),intent(in) :: momentum(0:3),direction(0:3)
   optional :: direction
   complex(fltknd) :: cmpnnt2ima
-  type(angL_type) :: aux_angL
-  type(Rsqr_type) :: aux_Rsqr
   if (present(direction)) then
     obj%lightlike = .false.
     cmpnnt2ima = direction(vecPerm(2))*imag
@@ -250,10 +180,6 @@ contains
     obj%k%c12 = momentum(vecPerm(1)) - cmpnnt2ima
     obj%k%c21 = momentum(vecPerm(1)) + cmpnnt2ima
     obj%k%c22 = momentum(        0 ) - momentum(vecPerm(3))
-    aux_Rsqr = conj(obj%sqrL)
-    aux_angL = conj(obj%Rang)
-    obj%kstr = ( obj%angL * obj%k * aux_Rsqr )/( obj%sqrL * aux_Rsqr )
-    obj%kapp = ( aux_angL * obj%k * obj%Rsqr )/( aux_angL * obj%Rang )
   else
     obj%lightlike = .true.
     cmpnnt2ima = momentum(vecPerm(2))*imag
@@ -272,49 +198,7 @@ contains
     end subroutine
   end subroutine
 
-  subroutine qom_fill_c( obj ,momentum ,direction )
-! momentum must be light-like if no direction is given.
-! If provided, direction must be ligh-like and its inner product
-! with momentum must vanish.
-  class(qomentum_type) :: obj
-  complex(fltknd),intent(in) :: momentum(0:3),direction(0:3)
-  optional :: direction
-  complex(fltknd) :: cmpnnt2ima
-  type(angL_type) :: aux_angL
-  type(Rsqr_type) :: aux_Rsqr
-  if (present(direction)) then
-    obj%lightlike = .false.
-    cmpnnt2ima = direction(vecPerm(2))*imag
-    obj%p%c11 = direction(        0 ) + direction(vecPerm(3))
-    obj%p%c12 = direction(vecPerm(1)) - cmpnnt2ima
-    obj%p%c21 = direction(vecPerm(1)) + cmpnnt2ima
-    obj%p%c22 = direction(        0 ) - direction(vecPerm(3))
-    call put_spinors( obj )
-    cmpnnt2ima = momentum(vecPerm(2))*imag
-    obj%k%c11 = momentum(        0 ) + momentum(vecPerm(3))
-    obj%k%c12 = momentum(vecPerm(1)) - cmpnnt2ima
-    obj%k%c21 = momentum(vecPerm(1)) + cmpnnt2ima
-    obj%k%c22 = momentum(        0 ) - momentum(vecPerm(3))
-    aux_Rsqr = conj(obj%sqrL)
-    aux_angL = conj(obj%Rang)
-    obj%kstr = ( obj%angL * obj%k * aux_Rsqr )/( obj%sqrL * aux_Rsqr )
-    obj%kapp = ( aux_angL * obj%k * obj%Rsqr )/( aux_angL * obj%Rang )
-  else
-    obj%lightlike = .true.
-    cmpnnt2ima = momentum(vecPerm(2))*imag
-    obj%p%c11 = momentum(        0 ) + momentum(vecPerm(3))
-    obj%p%c12 = momentum(vecPerm(1)) - cmpnnt2ima
-    obj%p%c21 = momentum(vecPerm(1)) + cmpnnt2ima
-    obj%p%c22 = momentum(        0 ) - momentum(vecPerm(3))
-    call put_spinors( obj )
-    obj%k = obj%p
-    obj%kstr = 0
-    obj%kapp = 0
-  endif
-  end subroutine
-
   subroutine qom_fill_sl( obj ,pp )
-! pp must be light-like
   class(qomentum_type) :: obj
   type(slashed_type),intent(in) :: pp
   obj%lightlike = .true.
@@ -441,86 +325,8 @@ contains
   c%x2 =-a%c21*b%y1 + a%c11*b%y2
   end function
 
-! Convert R-type (ket-type) to L-type (bra-type), and vice-versa.
-  function L_from_R_ang( r ) result(l)
-  type(Rang_type),intent(in) :: r
-  type(angL_type) l
-  l%y1 =-r%y2
-  l%y2 = r%y1
-  end function
-  function R_from_L_ang( l ) result(r)
-  type(angL_type),intent(in) :: l
-  type(Rang_type) r
-  r%y1 = l%y2
-  r%y2 =-l%y1
-  end function
-  function L_from_R_sqr( r ) result(l)
-  type(Rsqr_type),intent(in) :: r
-  type(sqrL_type) l
-  l%x1 = r%x2
-  l%x2 =-r%x1
-  end function
-  function R_from_L_sqr( l ) result(r)
-  type(sqrL_type),intent(in) :: l
-  type(Rsqr_type) r
-  r%x1 =-l%x2
-  r%x2 = l%x1
-  end function
-  
-! Addition for spinors
-  function plus_angL( a,b ) result(c)
-  type(angL_type),intent(in) :: a,b
-  type(angL_type) :: c
-  c%y1 = a%y1+b%y1
-  c%y2 = a%y2+b%y2
-  end function
-  function plus_Rang( a,b ) result(c)
-  type(Rang_type),intent(in) :: a,b
-  type(Rang_type) :: c
-  c%y1 = a%y1+b%y1
-  c%y2 = a%y2+b%y2
-  end function
-  function plus_sqrL( a,b ) result(c)
-  type(sqrL_type),intent(in) :: a,b
-  type(sqrL_type) :: c
-  c%x1 = a%x1+b%x1
-  c%x2 = a%x2+b%x2
-  end function
-  function plus_Rsqr( a,b ) result(c)
-  type(Rsqr_type),intent(in) :: a,b
-  type(Rsqr_type) :: c
-  c%x1 = a%x1+b%x1
-  c%x2 = a%x2+b%x2
-  end function
-
-! Subtraction for spinors
-  function minus_angL( a,b ) result(c)
-  type(angL_type),intent(in) :: a,b
-  type(angL_type) :: c
-  c%y1 = a%y1-b%y1
-  c%y2 = a%y2-b%y2
-  end function
-  function minus_Rang( a,b ) result(c)
-  type(Rang_type),intent(in) :: a,b
-  type(Rang_type) :: c
-  c%y1 = a%y1-b%y1
-  c%y2 = a%y2-b%y2
-  end function
-  function minus_sqrL( a,b ) result(c)
-  type(sqrL_type),intent(in) :: a,b
-  type(sqrL_type) :: c
-  c%x1 = a%x1-b%x1
-  c%x2 = a%x2-b%x2
-  end function
-  function minus_Rsqr( a,b ) result(c)
-  type(Rsqr_type),intent(in) :: a,b
-  type(Rsqr_type) :: c
-  c%x1 = a%x1-b%x1
-  c%x2 = a%x2-b%x2
-  end function
-
-! Addition and subtraction for the slashed_type
   function plus_sl_sl( a,b ) result(c)
+! a_slash + b_slash
   type(slashed_type),intent(in) :: a,b
   type(slashed_type) :: c
   c%c11 = a%c11+b%c11
@@ -528,7 +334,9 @@ contains
   c%c21 = a%c21+b%c21
   c%c22 = a%c22+b%c22
   end function
+  
   function minus_sl_sl( a,b ) result(c)
+! a_slash - b_slash
   type(slashed_type),intent(in) :: a,b
   type(slashed_type) :: c
   c%c11 = a%c11-b%c11
@@ -537,8 +345,8 @@ contains
   c%c22 = a%c22-b%c22
   end function
   
-! Scalar multiplication
   function c_slash( a,b ) result(c)
+! scalar * b_slash
   complex(fltknd),intent(in) :: a
   type(slashed_type),intent(in) :: b
   type(slashed_type) :: c
@@ -547,7 +355,9 @@ contains
   c%c21 = a*b%c21
   c%c22 = a*b%c22
   end function
+  
   function slash_c( b,a ) result(c)
+! b_slash * scalar
   complex(fltknd),intent(in) :: a
   type(slashed_type),intent(in) :: b
   type(slashed_type) :: c
@@ -556,7 +366,9 @@ contains
   c%c21 = a*b%c21
   c%c22 = a*b%c22
   end function
+  
   function c_sqrL( a,b ) result(c)
+! scalar * [b|
   complex(fltknd),intent(in) :: a
   type(sqrL_type),intent(in) :: b
   type(sqrL_type) :: c
@@ -564,13 +376,16 @@ contains
   c%x2 = a*b%x2
   end function
   function sqrL_c( b,a ) result(c)
+! [b| * scalar
   complex(fltknd),intent(in) :: a
   type(sqrL_type),intent(in) :: b
   type(sqrL_type) :: c
   c%x1 = a*b%x1
   c%x2 = a*b%x2
   end function
+  
   function c_Rsqr( a,b ) result(c)
+! scalar * |b]
   complex(fltknd),intent(in) :: a
   type(Rsqr_type),intent(in) :: b
   type(Rsqr_type) :: c
@@ -578,13 +393,16 @@ contains
   c%x2 = a*b%x2
   end function
   function Rsqr_c( b,a ) result(c)
+! |b] * scalar
   complex(fltknd),intent(in) :: a
   type(Rsqr_type),intent(in) :: b
   type(Rsqr_type) :: c
   c%x1 = a*b%x1
   c%x2 = a*b%x2
   end function
+  
   function c_angL( a,b ) result(c)
+! scalar * <b|
   complex(fltknd),intent(in) :: a
   type(angL_type),intent(in) :: b
   type(angL_type) :: c
@@ -592,13 +410,16 @@ contains
   c%y2 = a*b%y2
   end function
   function angL_c( b,a ) result(c)
+! <b| * scalar
   complex(fltknd),intent(in) :: a
   type(angL_type),intent(in) :: b
   type(angL_type) :: c
   c%y1 = a*b%y1
   c%y2 = a*b%y2
   end function
+  
   function c_Rang( a,b ) result(c)
+! scalar * |b>
   complex(fltknd),intent(in) :: a
   type(Rang_type),intent(in) :: b
   type(Rang_type) :: c
@@ -606,6 +427,7 @@ contains
   c%y2 = a*b%y2
   end function
   function Rang_c( b,a ) result(c)
+! |b> * scalar
   complex(fltknd),intent(in) :: a
   type(Rang_type),intent(in) :: b
   type(Rang_type) :: c
@@ -613,32 +435,6 @@ contains
   c%y2 = a*b%y2
   end function
 
-! Define an L-type as the complex conjugated of an R-type,
-! and vice-versa
-  function conj_Rang( b ) result(c)
-  type(angL_type),intent(in) :: b
-  type(Rang_type) :: c
-  c%y1 = conjg(b%y1)
-  c%y2 = conjg(b%y2)
-  end function
-  function conj_angL( b ) result(c)
-  type(Rang_type),intent(in) :: b
-  type(angL_type) :: c
-  c%y1 = conjg(b%y1)
-  c%y2 = conjg(b%y2)
-  end function
-  function conj_Rsqr( b ) result(c)
-  type(sqrL_type),intent(in) :: b
-  type(Rsqr_type) :: c
-  c%x1 = conjg(b%x1)
-  c%x2 = conjg(b%x2)
-  end function
-  function conj_sqrL( b ) result(c)
-  type(Rsqr_type),intent(in) :: b
-  type(sqrL_type) :: c
-  c%x1 = conjg(b%x1)
-  c%x2 = conjg(b%x2)
-  end function
 
 
   function square_sl( a ) result(rslt)
@@ -916,7 +712,6 @@ contains
   function list_shift_sqr( obj ,i1,i2 ,zz ) result(rslt)
 ! construct qomentum_type obj by shifting its square spinors
 ! with ee, so  |1> -> |1>, |1] -> |1] + z*|2]
-! Implies k=p
   class(qomentum_list_type) :: obj
   integer,intent(in) :: i1,i2
   complex(fltknd),intent(in) :: zz
@@ -938,7 +733,6 @@ contains
   function list_shift_ang( obj ,i1,i2 ,zz ) result(rslt)
 ! construct qomentum_type obj by shifting its angular spinors
 ! with ee, so  |1] -> |1], |1> -> |1> + z*|2>
-! Implies k=p
   class(qomentum_list_type) :: obj
   integer,intent(in) :: i1,i2
   complex(fltknd),intent(in) :: zz
@@ -958,7 +752,7 @@ contains
 
 
   function list_shift_kapp( obj ,i1,i2 ,zz ) result(rslt)
-! only shift momentum k
+! only shift momentum
   class(qomentum_list_type) :: obj
   integer,intent(in) :: i1,i2
   complex(fltknd),intent(in) :: zz
@@ -976,7 +770,7 @@ contains
 
 
   function list_shift_kstr( obj ,i1,i2 ,zz ) result(rslt)
-! only shift momentum k
+! only shift momentum
   class(qomentum_list_type) :: obj
   integer,intent(in) :: i1,i2
   complex(fltknd),intent(in) :: zz

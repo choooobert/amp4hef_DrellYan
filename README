@@ -1,6 +1,6 @@
   
 author: Andreas van Hameren <hamerenREMOVETHIS@ifj.edu.pl>  
-date: 02-03-2019  
+date: 07-01-2019  
 
 contributers: Marcin Bury <marcin.buryREMOVETHIS@ifj.edu.pl>
               Kacper Bilko <kacperbilkoREMOVETHIS@gmail.com>
@@ -34,15 +34,15 @@ the file "amp4hef_main.f03":
 
   subroutine put_process( id ,Ntotal ,Noffshell ,process )  
     integer,intent(out) :: id
-    integer,intent(in ) :: Ntotal,Noffshell,process(*)
+    integer,intent(in ) :: Noffshell,Nonshell,process(*)
 !
 !   Ntotal is the total number of partons in the process
-! Noffshel is the number of off-shell partons.
-!          The off-shell partons are none, the first, or the first two.
-!  process has size at least "Ntotal", and encodes the process. So for example
-! the process "g* q -> q g g" is represented as "0 -> g* q~ q g g" by putting
+! Noffshel is the number of off-shell partons. The off-shell partons
+!          are none, the first, or the first two.
+! process  has size at least "Ntotal", and encodes the process. So for example
+! the process "g* q -> q g g" is represented as "0 -> g* q~ q g g" putting
 !   Ntotal=5 ,Noffshell=1 ,process(1:5)=[0,-1,1,0,0]
-! the process "q* g -> q g g" is represented as "0 -> q~* g q g g" by putting
+! the process "q* g -> q g g" is represented as "0 -> q~* g q g g" putting
 !   Ntotal=5 ,Noffshell=1 ,process(1:5)=[-1,0,1,0,0]
 ! The output "id" is an integer identificator for the initialized process.
   
@@ -84,7 +84,6 @@ the file "amp4hef_main.f03":
 !
 ! The same as "matrix_element_a", but including factors for the average
 ! over initial-state colors, and the final-state symmetry factor.
-! Factors for the average over initial-state spins are not included.
   
 
   subroutine amplitude( id ,rslt ,helicity ,permutation )  
@@ -95,10 +94,13 @@ the file "amp4hef_main.f03":
 !
 ! can be called several times after "put_momenta" for different values
 ! of the input "helicity" and "permutation".
-! Helicities should follow the process as given to put_process,
-! so for example helicities refering to off-shell gluons are ignored.
+! The first entries of "helicity" refer to the on-shell gluons.
+! If there is a q-qBar pair, then the next helicity refers to the quark.
+! The anti-quark automatically gets the opposite helicity of the quark.
+! If the quark is off-shell, then the helicity refers to the opposite
+! of the helicity of the anti-quark.
 ! If there are only gluons, then "perm(1:Ntotal-2)" permutes the last
-! "Ntotal-2" gluons. If there is a q-qBar pair, it permutes the gluons.
+! "Ntotal" gluons. If there is a q-qBar pair, it permutates the gluons.
 ! The normalization of the amplitudes is such that
 !   A(1-,2+,3-,4+) = <13>^4 / (<12><23><34><41>)
 ! and

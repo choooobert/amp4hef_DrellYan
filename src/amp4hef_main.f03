@@ -1,13 +1,13 @@
 ! Main module providing the routines decribed in the README file
 
+
 module amp4hef
 
   use amp4hef_io ,only: set_path,split_line
   use amp4hef_qomentum ,only: fltknd ,NsizeProc,NsizeFlavor &
                              ,init_qomentum ,qomentum_list_type
   use amp4hef_aux ,only: NcolDof ,factorial
-  use amp4hef_ng
-  use amp4hef_qq
+  use amp4hef_DrellYan
 
   implicit none
   private
@@ -57,7 +57,12 @@ contains
   write(*,'(A)') '# for the evaluation of helicity amplitudes with off-shell partons.    #'
   write(*,'(A)') '#                                                                      #'
   write(*,'(A)') '# author: Andreas van Hameren <hamerenREMOVETHIS@ifj.edu.pl>           #'
-  write(*,'(A)') '#   date: 08-03-2019                                                   #'
+  write(*,'(A)') '#   date: 07-01-2019                                                   #'
+  write(*,'(A)') '#                                                                      #'
+  write(*,'(A)') '# contributers: Marcin Bury <marcin.buryREMOVETHIS@ifj.edu.pl>         #'
+  write(*,'(A)') '#               Kacper Bilko <kacperbilkoREMOVETHIS@gmail.com>         #'
+  write(*,'(A)') '#               Hubert Milczarek <hb.milczarekREMOVETHIS@gmail.com>    #'
+  write(*,'(A)') '#               Mirko Serino <mirkos.serinoREMOVETHIS@gmail.com>       #'
   write(*,'(A)') '#                                                                      #'
   write(*,'(A)') '# Please cite                                                          #'
   write(*,'(A)') '#   M. Bury and A. van Hameren, Comput.Phys.Commun. 196 (2015) 592-598 #'
@@ -65,15 +70,14 @@ contains
   write(*,'(A)') '#                                                                      #'
   write(*,'(A)') '########################################################################'
   call init_qomentum
-  call fill_matrices_ng
-  call fill_matrices_qq
+  call fill_matrices_DrellYan
   end subroutine
 
 
   subroutine put_process( id ,Ntotal ,Noffshell ,process )
   integer,intent(out) :: id
   integer,intent(in) :: Ntotal ,Noffshell ,process(*)
-  integer :: ii,jj,kk,Noff1,Nsum
+  integer :: ii,jj,kk,Noff2,Nsum, NZ
   integer :: NflavorFinst(-NsizeFlavor:NsizeFlavor)
 !
   if (initz) call init_amp4hef
@@ -84,18 +88,24 @@ contains
             ,NhelOrder=>glob(id)%NhelOrder,helOrder=>glob(id)%helOrder )
   Ntot = Ntotal
   Noff = Noffshell
-  Noff1 = Noff+1
+	NZ = 1
+  Noff2 = Noff+2
   glob(id)%offshell = 0
   glob(id)%onshell = 0
   do ii=1,Noff
     glob(id)%offshell(ii) = ii
   enddo
-  do ii=Noff1,Ntot
-    glob(id)%onshell(ii-Noff) = ii
+	glob(id)%Z=Noff+1
+  do ii=Noff2,Ntot
+    glob(id)%onshell(ii-Noff-1) = ii
   enddo
   flavor =-999
   Nflavor = 0
   NflavorFinst = 0
+	
+	
+	
+	! co te petle robia, przeanalizuj
   do ii=1,Ntot
     if (process(ii).lt.-NsizeFlavor.or.NsizeFlavor.lt.process(ii)) then
       write(*,*) 'ERROR in amp4hef: flavor',process(ii),' not defined'
@@ -115,15 +125,10 @@ contains
     glob(id)%symFac = glob(id)%symFac * factorial(NflavorFinst(ii))
   enddo 
 !
-  if (glob(id)%Ntot.eq.glob(id)%Nflavor(0)) then
-    glob(id)%matrix_element => matrix_element_ng
-    glob(id)%all_amplitudes => all_amplitudes_ng
-    glob(id)%amplitude      => amplitude_ng
-  else
-    glob(id)%matrix_element => matrix_element_qq
-    glob(id)%all_amplitudes => all_amplitudes_qq
-    glob(id)%amplitude      => amplitude_qq
-  endif
+    glob(id)%matrix_element => matrix_element_DrellYan
+    glob(id)%all_amplitudes => all_amplitudes_DrellYan
+    glob(id)%amplitude      => amplitude_DrellYan
+
 !
   if (sum(process(1:Ntot)).ne.0) then
     write(*,*) 'ERROR in amp4hef: process not possible'
@@ -145,7 +150,7 @@ contains
 ! opposite helicity of the anti-quark. Off-shell (anti)-quarks have helicity!
   NhelOrder = 0
   helOrder = 0
-  do jj=Noff1,Ntot
+  do jj=Noff2,Ntot
     if (process(jj).ne.0) cycle
     NhelOrder = NhelOrder+1
     helOrder(NhelOrder) = jj
@@ -174,19 +179,19 @@ contains
 ! If there are off-shell momenta, it must be the first or the first two.
   integer,intent(in) :: id
   real(fltknd),intent(in) :: momenta(0:3,*) ,directions(0:3,*)
-  integer :: ii,Noff1
+  integer :: ii,Noff2
   associate( Ntot=>glob(id)%Ntot ,Noff=>glob(id)%Noff )
-  Noff1 = Noff+1
+  Noff2 = Noff+1
   do ii=1,Noff
     call glob(id)%Q(ii)%fill( momenta(0:3,ii) ,directions(0:3,ii) )
   enddo
-  do ii=Noff1,Ntot
+  do ii=Noff2,Ntot
     call glob(id)%Q(ii)%fill( momenta(0:3,ii) )
   enddo
-!moved to %fill  do ii=1,Noff
-!moved to %fill    glob(id)%Q(ii)%kstr = glob(id)%ang(ii,ii,Noff1)/glob(id)%sqr(ii,Noff1)
-!moved to %fill    glob(id)%Q(ii)%kapp = glob(id)%ang(Noff1,ii,ii)/glob(id)%ang(Noff1,ii)
-!moved to %fill  enddo
+  do ii=1,Noff
+    glob(id)%Q(ii)%kstr = glob(id)%ang(ii,ii,Noff2)/glob(id)%sqr(ii,Noff2)
+    glob(id)%Q(ii)%kapp = glob(id)%ang(Noff2,ii,ii)/glob(id)%ang(Noff2,ii)
+  enddo
   end associate
   end subroutine
 

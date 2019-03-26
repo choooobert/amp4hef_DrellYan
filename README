@@ -1,0 +1,115 @@
+  
+author: Andreas van Hameren <hamerenREMOVETHIS@ifj.edu.pl>  
+date: 02-03-2019  
+
+contributers: Marcin Bury <marcin.buryREMOVETHIS@ifj.edu.pl>
+              Kacper Bilko <kacperbilkoREMOVETHIS@gmail.com>
+              Hubert Milczarek <hb.milczarekREMOVETHIS@gmail.com>
+              Mirko Serino <mirkos.serinoREMOVETHIS@gmail.com>
+  
+First, execute
+
+$ ./config.sh
+
+Then, execute  
+  
+$ ./create.sh source  
+  
+to create the source file "build/amp4hef.f03" which can be compiled to  
+make the Fortran module "amp4hef" available. If you do not want to use  
+the script, you must compile the separate source files yourself in the  
+order as given inside the script. Execute create.sh without arguments
+to get more information. 
+  
+The Fortran module "amp4hef" provides the parameter  
+  
+  integer,parameter :: fltknd=kind(1d0)  
+  
+which is set to this value at the beginning of the module  
+"amp4hef_qomentum". All real and complex variables are of this kind.  
+  
+The Fortran module "amp4hef" provides the following routines defined in  
+the file "amp4hef_main.f03":  
+  
+
+  subroutine put_process( id ,Ntotal ,Noffshell ,process )  
+    integer,intent(out) :: id
+    integer,intent(in ) :: Ntotal,Noffshell,process(*)
+!
+!   Ntotal is the total number of partons in the process
+! Noffshel is the number of off-shell partons.
+!          The off-shell partons are none, the first, or the first two.
+!  process has size at least "Ntotal", and encodes the process. So for example
+! the process "g* q -> q g g" is represented as "0 -> g* q~ q g g" by putting
+!   Ntotal=5 ,Noffshell=1 ,process(1:5)=[0,-1,1,0,0]
+! the process "q* g -> q g g" is represented as "0 -> q~* g q g g" by putting
+!   Ntotal=5 ,Noffshell=1 ,process(1:5)=[-1,0,1,0,0]
+! The output "id" is an integer identificator for the initialized process.
+  
+
+  subroutine put_momenta( id ,momenta ,directions )  
+    integer     ,intent(in) :: id
+    real(fltknd),intent(in) :: momenta(0:3,*) ,directions(0:3,*)
+!
+! The size of the second dimension of the input "momenta" should be at  
+! least "Ntotal". If "Noffshell=2", then the first two entries,
+! "momenta(0:3,1)" and "momenta(0:3,2)", should contain the off-shell
+! momenta. If "Noffshell=1", then the first entry of "momenta" should
+! contain the off-shell momentum. The other entries should be on-shell.
+! The sum of the momenta should vanish, so they should all be incomming,
+! or outgoing.  
+! The size of the second dimension of the input "directions" should be  
+! at least "Noffshell". These "Noffshell" entries should contain the  
+! longitudinal momentum components of the off-shell momenta, as in  
+!   gluon 1 off-shell: momenta(0:3,1) = directions(0:3,1) + kT(0:3,1)  
+!   gluon 2 off-shell: momenta(0:3,2) = directions(0:3,2) + kT(0:3,2)  
+  
+
+  subroutine matrix_element_a( id ,rslt )  
+    integer     ,intent(in ) :: id
+    real(fltknd),intent(out) :: rslt  
+!
+! should be called after subroutine "put_momenta" and returns the  
+! amplitude squared and summed over colors and helicities for the values  
+! of the momenta given to "put_momenta".  
+! The result of this routine is missing a factor  
+!   "(4*pi*alpha_strong)^(Ntotal-2)"
+! The number of colors is fixed to the value 3. Have a look in the file
+! "amp4hef_aux.f03" if you would like to change this.
+  
+
+  subroutine matrix_element_b( id ,rslt )  
+    integer     ,intent(in ) :: id
+    real(fltknd),intent(out) :: rslt
+!
+! The same as "matrix_element_a", but including factors for the average
+! over initial-state colors, and the final-state symmetry factor.
+! Factors for the average over initial-state spins are not included.
+  
+
+  subroutine amplitude( id ,rslt ,helicity ,permutation )  
+    integer        ,intent(in ) :: id
+    complex(fltknd),intent(out) :: rslt  
+    integer        ,intent(in ) :: helicity(*)  
+    integer        ,intent(in ) :: permutation(*)  
+!
+! can be called several times after "put_momenta" for different values
+! of the input "helicity" and "permutation".
+! Helicities should follow the process as given to put_process,
+! so for example helicities refering to off-shell gluons are ignored.
+! If there are only gluons, then "perm(1:Ntotal-2)" permutes the last
+! "Ntotal-2" gluons. If there is a q-qBar pair, it permutes the gluons.
+! The normalization of the amplitudes is such that
+!   A(1-,2+,3-,4+) = <13>^4 / (<12><23><34><41>)
+! and
+!   A(1*,2+,3-,4+) = <p1|3>^4 / (<p1|2><23><34><4|p1>) / kappa1*
+! where "momentum1 = p1 + kT1"
+
+
+EXAMPLE:
+An example of use of "amp4hef" can be found in the directory "example".
+Have a look at the file "example/src/main.f03". It constitutes a Monte
+Carlo program to evaluate the cross section for a number of processes.
+The event generation is simulated by reading event files.
+The directory "example_cpp" contains a similar example of use in C++.
+

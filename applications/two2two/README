@@ -1,0 +1,9 @@
+
+Execute the following once:
+
+$ ./compile.sh
+
+Then, you can edit the input file, and execute
+
+$ ./main.out input
+

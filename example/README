@@ -1,0 +1,16 @@
+
+========================================================================
+ Example of use of "amp4hef" in a Monte Carlo program. Have a look at
+ the file "src/main.f03". It constitutes a Monte Carlo program to
+ evaluate the cross section for a number of processes. The event
+ generation is simulated by reading event files.
+
+ To execute the program, choose your Fortran compiler at the beginning
+ of the file "run.sh", and execute
+
+ $ ./run.sh datafiles/gs_gs_3g.evt
+
+ Instead of "gs_gs_3g.evt", you can choose any other file in the
+ directory "datafiles".
+========================================================================
+

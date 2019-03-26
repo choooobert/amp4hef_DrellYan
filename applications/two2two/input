@@ -1,0 +1,27 @@
+###################################################################
+# Space-separated "words" in this file must stay space-separated! #
+# y3 =-1 <-- WRONG                                                #
+# y3 = -1 <-- RIGHT                                               #
+###################################################################
+# Enumeration convention:
+#
+# parton1 parton2 --> parton3 parton4
+#
+# The initial-state partons (number 1 and 2) are off-shell.
+#
+k1T  = 3
+phi1 = 0
+k3T  = 400
+k4T  = 500
+y3   = -2
+phi3 = 0.7
+  DyMin   DyMax NDy   = -2  4    100
+DphiMin DphiMax NDphi = -3.14 3.14 100
+
+# process = -parton1 -parton2 parton3 parton4
+# gluon=0, quark=1, anti-quark=-1, the four numbers must add up to 0
+process = -1 0 1 0
+
+# The grid will be written to the following file:
+output file = output.dat
+

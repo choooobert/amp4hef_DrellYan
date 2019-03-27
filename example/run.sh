@@ -6,7 +6,7 @@ FC="gfortran"
 #FC="ifort"
 
 here=`pwd`
-amp4hefDir=/home/milczare_1149070/hameren-amp4hef-a99e70cc8d07
+amp4hefDir=/home/hubert/repo/amp4hef_DrellYan
 exampleDir=$amp4hefDir/example
 buildDir=$exampleDir/build
 mkdir -p $buildDir

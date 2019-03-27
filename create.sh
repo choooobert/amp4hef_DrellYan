@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-amp4hefDir=/home/milczare_1149070/hameren-amp4hef-a99e70cc8d07
+amp4hefDir=/home/hubert/repo/amp4hef_DrellYan
 srcDir=$amp4hefDir/src
 buildDir=$amp4hefDir/build
 compiler="gfortran"

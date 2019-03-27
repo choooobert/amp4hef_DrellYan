@@ -3,7 +3,7 @@ set -e
 
 FC="gfortran"
 here=`pwd`
-amp4hefDir=/home/milczare_1149070/hameren-amp4hef-a99e70cc8d07
+amp4hefDir=/home/hubert/repo/amp4hef_DrellYan
 exampleDir=$amp4hefDir/example_cpp
 buildDir=$exampleDir/build
 mkdir -p $buildDir

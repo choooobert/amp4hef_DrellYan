@@ -7,10 +7,11 @@ module amp4hef_DrellYan
   private
   public :: fill_matrices_DrellYan,matrix_element_DrellYan ,amplitude_DrellYan ,all_amplitudes_DrellYan
 
-  integer,parameter :: gluon=0 ,quark=1 ,antiq=-1 Zboson=2
+  real, parameter :: sqrt_2 = 1.41421356237
+  integer,parameter :: gluon=0 ,quark=1 ,antiq=-1, Zboson=2
 	 integer,parameter :: helTable_DrellYan(3,12)=reshape(&
-	 [-1,-1,-1	 1,-1,-1	-1, 0,-1	 1, 0,-1	-1, 1,-1	 1, 1,-1
-	 ,-1,-1, 1	 1,-1, 1	-1, 0, 1	 1, 0, 1	-1, 1, 1	 1, 1, 1
+	 [-1,-1,-1,	 1,-1,-1,	-1, 0,-1,	 1, 0,-1,	-1, 1,-1,	 1, 1,-1,&
+	  -1,-1, 1,	 1,-1, 1,	-1, 0, 1,	 1, 0, 1,	-1, 1, 1,	 1, 1, 1&
 	 ], [3,12])
 
   integer,allocatable,save :: mtx_4_sqr(:,:)
@@ -22,7 +23,7 @@ contains
   class(qomentum_list_type),intent(in) :: Tin
   real(fltknd) :: rslt
   complex(fltknd) :: amp(12)
-  integer :: ii,NhelSum,Nminus2, NhelConf, Nperm 
+  integer :: ii,NhelSum,Nminus2, NhelConf, Nperm, jj
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff )
 	NhelConf = 12
 	NhelSum = 3
@@ -44,18 +45,16 @@ contains
 
   subroutine all_amplitudes_DrellYan(id, Tin ,NhelConf ,Nperm ,amplitude ,factor )
   class(qomentum_list_type),intent(in) :: Tin
-	integer, intent(in) :: id
+	integer, intent(in) :: id, Nperm
   integer,intent(out) :: NhelConf
   complex(fltknd),intent(out) :: amplitude(:),factor
-  integer :: ii,NhelSum
+  integer :: ii,jj,NhelSum
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff )
 ! The following is valid only if there is at most one off-shell parton.
-	NhelConf = 12
 	NhelSum = 3
-	NPerm = 2
   do ii=1,NhelConf
   do jj=1,Nperm
-		amplitude(ii,jj) = amplitude_DrellYan(id, Tin ,helTable_DrellYan(1:NhelSum,ii) ,perTable(1:Nminus2,jj) )
+		amplitude(ii,jj) = amplitude_DrellYan(id, Tin ,helTable_DrellYan(1:NhelSum,ii) ,perTable(1:2,jj) )
   enddo
 	enddo
 	
@@ -74,37 +73,38 @@ contains
   complex(fltknd) :: rslt
   type(qomentum_list_type) :: T
   integer :: hel(-1:NsizeProc)
+  integer :: i1, i2, i3, i4, i5
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff ,offshell=>Tin%offshell )
 
   hel(-1:0) = 0
   hel(1:size(helicity)) = helicity
-
+	!
+	i1=2 ;i2=3 ;i3=4; i4=5; i5=1
+	!
   T%Ntot = Ntot
 
   T%Q(Ntot-1)   = Tin%Q(Tin%flavor(    1        ,antiq))             
   T%Q(Ntot)     = Tin%Q(Tin%flavor(    1        ,quark))
-	type(qomentum_list_type),intent(in) :: T
-	complex(fltknd) :: rslt
-	integer,intent(in) :: helicity(3)
 	rslt = 0
 	if (helicity(i2).eq.-1.and.helicity(i3).eq.-1.and.helicity(i4).eq.1) then 
 	rslt = amp_1(T) !+ amp_7(T) + amp_13(T)
-	if (helicity(i2).eq.-1.and.helicity(i3).eq.0.and.helicity(i4).eq.1) then 
+	else if (helicity(i2).eq.-1.and.helicity(i3).eq.0.and.helicity(i4).eq.1) then 
 	rslt = amp_2(T) !+ amp_8(T) + amp_14(T)
-	if (helicity(i2).eq.-1.and.helicity(i3).eq.1.and.helicity(i4).eq.1) then 
+	else if (helicity(i2).eq.-1.and.helicity(i3).eq.1.and.helicity(i4).eq.1) then 
 	rslt = amp_3(T) !+ amp_9(T) + amp_15(T)
 	
-	if (helicity(i2).eq.1.and.helicity(i3).eq.-1.and.helicity(i4).eq.-1) then 
+	else if (helicity(i2).eq.1.and.helicity(i3).eq.-1.and.helicity(i4).eq.-1) then 
 	rslt = amp_1(T) !+ amp_7(T) + amp_13(T)
 	rslt = conjg(rslt)
-	if (helicity(i2).eq.1.and.helicity(i3).eq.0.and.helicity(i4).eq.-1) then 
+	else if (helicity(i2).eq.1.and.helicity(i3).eq.0.and.helicity(i4).eq.-1) then 
 	rslt = amp_2(T) !+ amp_8(T) + amp_14(T)
 	rslt = conjg(rslt)
-	if (helicity(i2).eq.1.and.helicity(i3).eq.1.and.helicity(i4).eq.-1) then 
+	else if (helicity(i2).eq.1.and.helicity(i3).eq.1.and.helicity(i4).eq.-1) then 
 	rslt = amp_3(T) !+ amp_9(T) + amp_15(T)
 	rslt = conjg(rslt)
-
-	end function
+	end if
+  end associate
+end function
 
 !!!! amplitude case part,++ not relevant now
 	
@@ -119,12 +119,12 @@ contains
 	xx= T%sqr(i4,i5)*T%sqr(i4,i5)* T%ang(i1,i2)
 	yy = T%ang(i3,i1) - T%ang(i3,i2)*T%sqr(i2,i1)/ T%Q(i1)%kapp
 	zz = (-T%Q(i1)%kapp*T%Q(i1)%kstr-T%ang(i2,i1,i2))*(-T%Q(i5)%kapp*T%Q(i5)%kstr-T%ang(i4,i5,i4))*T%Q(i1)%kstr*T%Q(i5)%kapp
-	if (xx.ne.0.and.yy.ne.0.and.zz.ne.0) rslt = 2*sqrt(2)*xx*yy/zz
+	if (xx.ne.0.and.yy.ne.0.and.zz.ne.0) rslt = 2*sqrt_2*xx*yy/zz
 	end function
 	
 	function amp_2(T) result(rslt)
 	type(qomentum_list_type),intent(in) :: T
-	complex(fltknd) :: rslt,tt,uu,vv,xx,yy,zz,m
+	complex(fltknd) :: rslt,tt,uu,vv,xx,ww,yy,zz,m
 	integer :: i1, i2, i3, i4, i5
 	!
 	i1=2 ;i2=3 ;i3=4; i4=5; i5=1
@@ -151,8 +151,8 @@ contains
 	rslt = 0
 	xx = T%ang(i1,i2) * T%ang(i1,i2) * T%sqr(i4,i5) 
 	yy = T%sqr(i5,i3) - T%ang(i5,i4)*T%sqr(i4,i3)/T%Q(i5)%kstr
-	zz = (-T%Q(i1)%kapp*T%Q(i1)%kstr-T%ang(i2,i1,i2))*(-T%Q(i5)%kapp*T%Q(i5)%kstr-T%ang(i4,i5,i4))T%Q(i1)%kstr*T%Q(i5)%kapp
-	if (xx.ne.0.and.yy.ne.0.and.zz.ne.0) rslt = 2*sqrt(2)*xx*yy/zz
+	zz = (-T%Q(i1)%kapp*T%Q(i1)%kstr-T%ang(i2,i1,i2))*(-T%Q(i5)%kapp*T%Q(i5)%kstr-T%ang(i4,i5,i4))*T%Q(i1)%kstr*T%Q(i5)%kapp
+	if (xx.ne.0.and.yy.ne.0.and.zz.ne.0) rslt = 2*sqrt_2*xx*yy/zz
 	end function
 	
 

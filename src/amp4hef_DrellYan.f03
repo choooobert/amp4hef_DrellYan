@@ -18,11 +18,10 @@ module amp4hef_DrellYan
 
 contains
 
-  function matrix_element_DrellYan(id, Tin ) result(rslt)
-	integer, intent(in) :: id
+  function matrix_element_DrellYan(Tin ) result(rslt)
   class(qomentum_list_type),intent(in) :: Tin
   real(fltknd) :: rslt
-  complex(fltknd) :: amp(12)
+  complex(fltknd) :: amp(12,4)
   integer :: ii,NhelSum,Nminus2, NhelConf, Nperm, jj
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff )
 	NhelConf = 12
@@ -32,29 +31,30 @@ contains
   rslt = 0
 	do jj=1, Nperm
 		do ii=1, NhelConf
-      amp(ii, jj) = amplitude_DrellYan(id, Tin ,helTable_DrellYan(1:NhelSum,ii), perTable(1:NPerm,jj))
+      amp(ii, jj) = amplitude_DrellYan(Tin ,helTable_DrellYan(1:NhelSum,ii), perTable(1:NPerm,jj))
+      rslt = rslt + amp(ii, jj)
 !      write(*,'(2e16.8,99i3)') amp(ii),helTable_DrellYan(1:NhelSum,ii) !DEBUG
     enddo
 !    write(*,*) !DEBUG
-    rslt = rslt + colorSum( Nminus2 ,amp(1:NPerm) )
   enddo
   rslt = rslt*2
   end associate
   end function 
 
 
-  subroutine all_amplitudes_DrellYan(id, Tin ,NhelConf ,Nperm ,amplitude ,factor )
+  subroutine all_amplitudes_DrellYan(Tin ,NhelConf ,Nperm ,amplitude ,factor )
   class(qomentum_list_type),intent(in) :: Tin
-	integer, intent(in) :: id, Nperm
-  integer,intent(out) :: NhelConf
-  complex(fltknd),intent(out) :: amplitude(:),factor
+  integer,intent(out) :: NhelConf, Nperm
+  complex(fltknd),intent(out) :: amplitude(:,:),factor
   integer :: ii,jj,NhelSum
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff )
 ! The following is valid only if there is at most one off-shell parton.
 	NhelSum = 3
+	NhelConf =12
+	Nperm = 2
   do ii=1,NhelConf
   do jj=1,Nperm
-		amplitude(ii,jj) = amplitude_DrellYan(id, Tin ,helTable_DrellYan(1:NhelSum,ii) ,perTable(1:2,jj) )
+		amplitude(ii,jj) = amplitude_DrellYan(Tin ,helTable_DrellYan(1:NhelSum,ii) ,perTable(1:2,jj) )
   enddo
 	enddo
 	
@@ -63,13 +63,13 @@ contains
   end subroutine
 
 
- function amplitude_DrellYan(id, Tin ,helicity ,perm ) result(rslt)
+ function amplitude_DrellYan(Tin ,helicity ,perm ) result(rslt)
 ! The first entries of helicity refer to the on-shell gluons. The
 ! next helicity to the anti-quark. Off-shell (anti)-quarks have helicity,
 ! and the quark always gets the opposite helicity of the anti-quark.
 ! If 1(2) gluon(s) is(are) off-shell, it must be the first (2) gluon(s).
   class(qomentum_list_type),intent(in) :: Tin
-  integer,intent(in) :: id, helicity(:), perm(:)
+  integer,intent(in) :: helicity(:), perm(:)
   complex(fltknd) :: rslt
   type(qomentum_list_type) :: T
   integer :: hel(-1:NsizeProc)

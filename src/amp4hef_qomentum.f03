@@ -46,6 +46,7 @@ module amp4hef_qomentum
     type(Rang_type) :: Rang
     type(slashed_type) :: p ! direction
     type(slashed_type) :: k ! momentum
+    real(fltknd) :: momenta(0:3),direction(0:3)
     complex(fltknd) :: kapp,kstr
     logical :: lightlike
   contains
@@ -57,7 +58,7 @@ module amp4hef_qomentum
   end type
 
   type :: qomentum_list_type
-    integer :: Ntot,Noff
+    integer :: Ntot,Noff, NZ
     integer :: onshell(NsizeProc),offshell(2), Z
     integer :: Nflavor(-NsizeFlavor:NsizeFlavor)
     integer :: flavor(NsizeProc,-NsizeFlavor:NsizeFlavor)
@@ -68,6 +69,7 @@ module amp4hef_qomentum
     procedure(all_amp_interface),pointer :: all_amplitudes
     procedure(amp_interface),pointer :: amplitude
   contains
+    procedure :: set_direction
     procedure :: list_ang
     procedure :: list_ang_k
     procedure :: list_ang_sl
@@ -174,6 +176,7 @@ contains
     obj%p%c11 = direction(        0 ) + direction(vecPerm(3))
     obj%p%c12 = direction(vecPerm(1)) - cmpnnt2ima
     obj%p%c21 = direction(vecPerm(1)) + cmpnnt2ima
+    obj%p%c22 = obj%p%c12*obj%p%c21/obj%p%c11 !p(l0)-p(l3) !
     call finish_p
     cmpnnt2ima = momentum(vecPerm(2))*imag
     obj%k%c11 = momentum(        0 ) + momentum(vecPerm(3))
@@ -456,6 +459,13 @@ contains
 ! Below the type-bound routines for the qomentum_list_type, that
 ! ask for integer arguments, 
 ! eg. l%ang(1,2)= l%p(1)%angL*l%p(2)%Rang etc.
+
+  subroutine set_direction( obj ,i3, i1 )
+  class(qomentum_list_type) :: obj
+  integer,intent(in) :: i1,i3
+  end subroutine
+
+
 
   function list_ang( obj ,i1,i2 ) result(rslt)
 ! <12>

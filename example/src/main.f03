@@ -9,7 +9,7 @@ program mainMC
   integer :: Noffshell,Nfinst,Ntotal,ii,process(13)
   integer :: id1,Nperm,NhelConf
   real(fltknd) :: Ecm,kTsq(2),sHat
-  real(fltknd) :: momenta(0:3,8),directions(0:3,2),ampSquared
+  real(fltknd) :: momenta(0:3,8),directions(0:3,3),ampSquared
   real(fltknd) :: eventWeight,instWeight,psWeight,cnstWeight,totalWeight
   real(fltknd) :: partonLumi,alphaStrong,flux
   real(fltknd) :: sumW0,sumW1,sumW2

@@ -7,7 +7,7 @@ module amp4hef_DrellYan
   private
   public :: fill_matrices_DrellYan,matrix_element_DrellYan ,amplitude_DrellYan ,all_amplitudes_DrellYan
 
-  real, parameter :: sqrt_2 = 1.41421356237
+  real, parameter :: sqrt_2 = 1.41421356237_fltknd
   integer,parameter :: gluon=0 ,quark=1 ,antiq=-1, Zboson=2
 	 integer,parameter :: helTable_DrellYan(3,12)=reshape(&
 	 [-1,-1,-1,	 1,-1,-1,	-1, 0,-1,	 1, 0,-1,	-1, 1,-1,	 1, 1,-1,&
@@ -18,7 +18,7 @@ module amp4hef_DrellYan
 
 contains
 
-  function matrix_element_DrellYan(Tin ) result(rslt)
+  function matrix_element_DrellYan(Tin) result(rslt)
   class(qomentum_list_type),intent(in) :: Tin
   real(fltknd) :: rslt
   complex(fltknd) :: amp(12,4)
@@ -48,13 +48,12 @@ contains
   complex(fltknd),intent(out) :: amplitude(:,:),factor
   integer :: ii,jj,NhelSum
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff )
-! The following is valid only if there is at most one off-shell parton.
 	NhelSum = 3
 	NhelConf =12
 	Nperm = 2
   do ii=1,NhelConf
   do jj=1,Nperm
-		amplitude(ii,jj) = amplitude_DrellYan(Tin ,helTable_DrellYan(1:NhelSum,ii) ,perTable(1:2,jj) )
+		amplitude(ii,jj) = amplitude_DrellYan(Tin ,helTable_DrellYan(1:NhelSum,ii) ,perTable(1:Nperm,jj) )
   enddo
 	enddo
 	

@@ -83,21 +83,20 @@ contains
   if (initz) call init_amp4hef
   call increase_glob( id )
 !
-  associate( Ntot=>glob(id)%Ntot ,Noff=>glob(id)%Noff &
+  associate( Ntot=>glob(id)%Ntot ,Noff=>glob(id)%Noff ,NZ=>glob(id)%NZ &
             ,Nflavor=>glob(id)%Nflavor ,flavor=>glob(id)%flavor &
             ,NhelOrder=>glob(id)%NhelOrder,helOrder=>glob(id)%helOrder )
   Ntot = Ntotal
   Noff = Noffshell
-	NZ = 1
+  NZ = 1
   Noff2 = Noff+2
   glob(id)%offshell = 0
   glob(id)%onshell = 0
   do ii=1,Noff
     glob(id)%offshell(ii) = ii
   enddo
-	glob(id)%Z=Noff+1
-  do ii=Noff2,Ntot
-    glob(id)%onshell(ii-Noff-1) = ii
+  do ii=Noff2,Ntot-1
+    glob(id)%onshell(ii-Noff2 - 1) = ii
   enddo
   flavor =-999
   Nflavor = 0
@@ -107,6 +106,7 @@ contains
 	
 	! co te petle robia, przeanalizuj
   do ii=1,Ntot
+    ! checks if the particle has a correct color index
     if (process(ii).lt.-NsizeFlavor.or.NsizeFlavor.lt.process(ii)) then
       write(*,*) 'ERROR in amp4hef: flavor',process(ii),' not defined'
       stop
@@ -148,6 +148,8 @@ contains
 ! Translation array for helicity ordering:
 ! first on-shell gluons, then anti-quarks. Quarks automatically get the
 ! opposite helicity of the anti-quark. Off-shell (anti)-quarks have helicity!
+
+!what dies it do? need to rewrite it to adjust to 3 possible polarizations of massive bosons
   NhelOrder = 0
   helOrder = 0
   do jj=Noff2,Ntot
@@ -185,9 +187,11 @@ contains
   do ii=1,Noff
     call glob(id)%Q(ii)%fill( momenta(0:3,ii) ,directions(0:3,ii) )
   enddo
-  do ii=Noff2,Ntot
+  do ii=Noff2,(Ntot-1)
     call glob(id)%Q(ii)%fill( momenta(0:3,ii) )
   enddo
+      call glob(id)%Q(Ntot)%fill( momenta(0:3,Ntot) )
+
   do ii=1,Noff
     glob(id)%Q(ii)%kstr = glob(id)%ang(ii,ii,Noff2)/glob(id)%sqr(ii,Noff2)
     glob(id)%Q(ii)%kapp = glob(id)%ang(Noff2,ii,ii)/glob(id)%ang(Noff2,ii)

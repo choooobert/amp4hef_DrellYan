@@ -29,7 +29,7 @@ program mainMC
   
 ! Read the center-of-mass energy,
 ! the number of off-shell partons, and the number of final-state partons.
-  read(eventUnit,*) Ecm ,Noffshell ,Nfinst
+  read(eventUnit,*) Ecm ,Noffshell ,Nfinst, NZ
   Ntotal = Nfinst+2
 
 ! Read the process. 0=gluon ,positive=quark ,negative=anti-quark.
@@ -37,7 +37,7 @@ program mainMC
   read(eventUnit,*) process(1:Ntotal)
 
 ! Put the processes, and get id.
-  call put_process( id1 ,Ntotal ,Noffshell ,process )
+  call put_process( id1 ,Ntotal ,Noffshell ,NZ ,process )
 
 ! Calculate the overall constant to the event weights.
   cnstWeight = 1 &

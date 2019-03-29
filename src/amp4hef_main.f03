@@ -74,10 +74,10 @@ contains
   end subroutine
 
 
-  subroutine put_process( id ,Ntotal ,Noffshell ,process )
+  subroutine put_process( id ,Ntotal ,Noffshell ,NZbos ,process )
   integer,intent(out) :: id
-  integer,intent(in) :: Ntotal ,Noffshell ,process(*)
-  integer :: ii,jj,kk,Noff2,Nsum, NZ
+  integer,intent(in) :: Ntotal ,Noffshell ,NZbos ,process(*)
+  integer :: ii,jj,kk,Noff2,Nsum
   integer :: NflavorFinst(-NsizeFlavor:NsizeFlavor)
 !
   if (initz) call init_amp4hef
@@ -88,8 +88,8 @@ contains
             ,NhelOrder=>glob(id)%NhelOrder,helOrder=>glob(id)%helOrder )
   Ntot = Ntotal
   Noff = Noffshell
-  NZ = 1
   Noff2 = Noff+2
+  NZ = NZbos
   glob(id)%offshell = 0
   glob(id)%onshell = 0
   do ii=1,Noff
@@ -125,9 +125,12 @@ contains
     glob(id)%symFac = glob(id)%symFac * factorial(NflavorFinst(ii))
   enddo 
 !
+
+if(NZ.eq.1) then
     glob(id)%matrix_element => matrix_element_DrellYan
     glob(id)%all_amplitudes => all_amplitudes_DrellYan
     glob(id)%amplitude      => amplitude_DrellYan
+endif
 
 !
   if (sum(process(1:Ntot)).ne.0) then
@@ -149,7 +152,7 @@ contains
 ! first on-shell gluons, then anti-quarks. Quarks automatically get the
 ! opposite helicity of the anti-quark. Off-shell (anti)-quarks have helicity!
 
-!what dies it do? need to rewrite it to adjust to 3 possible polarizations of massive bosons
+!what does it do? need to rewrite it to adjust to 3 possible polarizations of massive bosons
   NhelOrder = 0
   helOrder = 0
   do jj=Noff2,Ntot

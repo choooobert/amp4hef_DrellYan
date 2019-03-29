@@ -59,7 +59,7 @@ module amp4hef_qomentum
 
   type :: qomentum_list_type
     integer :: Ntot,Noff, NZ
-    integer :: onshell(NsizeProc),offshell(2), Z
+    integer :: onshell(NsizeProc),offshell(2)
     integer :: Nflavor(-NsizeFlavor:NsizeFlavor)
     integer :: flavor(NsizeProc,-NsizeFlavor:NsizeFlavor)
     integer :: symFac,sizeHel,sizePerm

@@ -2,7 +2,9 @@ module amp4hef_DrellYan
   use amp4hef_io
   use amp4hef_aux
   use amp4hef_qomentum
-
+! TODO: fix problem with helicity table
+! TODO: make outcome of DrellYan amplitudes non-zero
+! TODO: check if set_direction work correctly
   implicit none
   private
   public :: fill_matrices_DrellYan,matrix_element_DrellYan ,amplitude_DrellYan ,all_amplitudes_DrellYan
@@ -10,8 +12,8 @@ module amp4hef_DrellYan
   real, parameter :: sqrt_2 = 1.41421356237_fltknd
   integer,parameter :: gluon=0 ,quark=1 ,antiq=-1, Zboson=2
 	 integer,parameter :: helTable_DrellYan(3,12)=reshape(&
-	 [-1,-1,-1,	 1,-1,-1,	-1, 0,-1,	 1, 0,-1,	-1, 1,-1,	 1, 1,-1,&
-	  -1,-1, 1,	 1,-1, 1,	-1, 0, 1,	 1, 0, 1,	-1, 1, 1,	 1, 1, 1&
+	 [-1,-1,-1,	 -1,-1, 1,	-1, 0,-1,	-1, 0, 1,	-1, 1,-1,	 -1, 1,1,&
+	   1,-1,-1,   1,-1, 1,	 1, 0,-1,	 1, 0, 1,	 1, 1,-1,	  1, 1, 1&
 	 ], [3,12])
 
   integer,allocatable,save :: mtx_4_sqr(:,:)
@@ -24,14 +26,14 @@ contains
   complex(fltknd) :: amp(12,4)
   integer :: ii,NhelSum,Nminus2, NhelConf, Nperm, jj
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff )
-	NhelConf = 12
+    NhelConf = 12
 	NhelSum = 3
 	NPerm = 2
 !
   rslt = 0
 	do jj=1, Nperm
 		do ii=1, NhelConf
-      amp(ii, jj) = amplitude_DrellYan(Tin ,helTable_DrellYan(1:NhelSum,ii), perTable(1:NPerm,jj))
+      amp(ii, jj) = amplitude_DrellYan(Tin ,helTable_DrellYan(:,ii), perTable(1:NPerm,jj))
       rslt = rslt + amp(ii, jj)
 !      write(*,'(2e16.8,99i3)') amp(ii),helTable_DrellYan(1:NhelSum,ii) !DEBUG
     enddo
@@ -75,15 +77,16 @@ contains
   integer :: i1, i2, i3, i4, i5
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff ,offshell=>Tin%offshell )
 
-  hel(-1:0) = 0
-  hel(1:size(helicity)) = helicity
+  hel(3:5) = helicity
 	!
 	i1=2 ;i2=3 ;i3=4; i4=5; i5=1
 	!
   T%Ntot = Ntot
 
-  T%Q(Ntot-1)   = Tin%Q(Tin%flavor(    1        ,antiq))             
-  T%Q(Ntot)     = Tin%Q(Tin%flavor(    1        ,quark))
+!what is it for?
+!  T%Q(Ntot-1)   = Tin%Q(Tin%flavor(    1        ,antiq))
+!  T%Q(Ntot)     = Tin%Q(Tin%flavor(    1        ,quark))
+    write (*,*) "helicity : ", helicity(i3)
 	rslt = 0
 	if (helicity(i2).eq.-1.and.helicity(i3).eq.-1.and.helicity(i4).eq.1) then 
 	rslt = amp_1(T) !+ amp_7(T) + amp_13(T)
@@ -119,6 +122,7 @@ end function
 	yy = T%ang(i3,i1) - T%ang(i3,i2)*T%sqr(i2,i1)/ T%Q(i1)%kapp
 	zz = (-T%Q(i1)%kapp*T%Q(i1)%kstr-T%ang(i2,i1,i2))*(-T%Q(i5)%kapp*T%Q(i5)%kstr-T%ang(i4,i5,i4))*T%Q(i1)%kstr*T%Q(i5)%kapp
 	if (xx.ne.0.and.yy.ne.0.and.zz.ne.0) rslt = 2*sqrt_2*xx*yy/zz
+	write (*,*) "In amp1"
 	end function
 	
 	function amp_2(T) result(rslt)
@@ -138,6 +142,7 @@ end function
 	yy = T%sqr(i5,i3) - T%ang(i5,i4)*T%sqr(i4,i3)/T%Q(i5)%kstr
 	zz = T%ang(i3,i1) - T%ang(i3,i2)*T%sqr(i2,i1)/T%Q(i1)%kapp
 	if (tt.ne.0.and.uu.ne.0.and.ww.ne.0) rslt = 4*tt/uu*(m*vv/ww*xx-yy*zz/m)
+    write (*,*) "In amp2"
 	end function
 	
 	function amp_3(T) result(rslt)
@@ -152,6 +157,7 @@ end function
 	yy = T%sqr(i5,i3) - T%ang(i5,i4)*T%sqr(i4,i3)/T%Q(i5)%kstr
 	zz = (-T%Q(i1)%kapp*T%Q(i1)%kstr-T%ang(i2,i1,i2))*(-T%Q(i5)%kapp*T%Q(i5)%kstr-T%ang(i4,i5,i4))*T%Q(i1)%kstr*T%Q(i5)%kapp
 	if (xx.ne.0.and.yy.ne.0.and.zz.ne.0) rslt = 2*sqrt_2*xx*yy/zz
+    write (*,*) "In amp3"
 	end function
 	
 

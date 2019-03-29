@@ -7,7 +7,7 @@ program mainMC
   
   logical :: exitLoop
   integer :: Noffshell,Nfinst,Ntotal,ii,process(13)
-  integer :: id1,Nperm,NhelConf
+  integer :: id1,Nperm,NhelConf, NZ
   real(fltknd) :: Ecm,kTsq(2),sHat
   real(fltknd) :: momenta(0:3,8),directions(0:3,3),ampSquared
   real(fltknd) :: eventWeight,instWeight,psWeight,cnstWeight,totalWeight
@@ -38,7 +38,6 @@ program mainMC
 
 ! Put the processes, and get id.
   call put_process( id1 ,Ntotal ,Noffshell ,NZ ,process )
-
 ! Calculate the overall constant to the event weights.
   cnstWeight = 1 &
 !   Conversion factor from GeV to nanobarn.
@@ -79,7 +78,6 @@ program mainMC
     sHat = momSquared( momenta(:,1)+momenta(:,2) )
     kTsq(1:2) = momenta(1,1:2)**2 + momenta(2,1:2)**2
     flux = 2*sqrt(( sHat + kTsq(1) + kTsq(2) )**2 - 4*kTsq(1)*kTsq(2))
-
 !   Construct directions from the energy and the z-component of the initial-state momenta.
     directions(0,1:2) = momenta(0,1:2)
     directions(1,1:2) = 0
@@ -90,7 +88,6 @@ program mainMC
 !   average over initial-state colors, and the final-state symmetry factor.
     call put_momenta( id1 ,momenta ,directions )
     call matrix_element_b( id1 ,ampSquared )
-
 !   Determine the total weight of the event.
     totalWeight = cnstWeight / flux * instWeight * psWeight * partonLumi &
                 * ampSquared * alphaStrong**Nfinst

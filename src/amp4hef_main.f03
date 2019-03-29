@@ -79,6 +79,7 @@ contains
   integer,intent(in) :: Ntotal ,Noffshell ,NZbos ,process(*)
   integer :: ii,jj,kk,Noff2,Nsum
   integer :: NflavorFinst(-NsizeFlavor:NsizeFlavor)
+  write (*,*) "Number of Z bosons: ", NZbos
 !
   if (initz) call init_amp4hef
   call increase_glob( id )
@@ -90,20 +91,20 @@ contains
   Noff = Noffshell
   Noff2 = Noff+2
   NZ = NZbos
+
   glob(id)%offshell = 0
   glob(id)%onshell = 0
   do ii=1,Noff
     glob(id)%offshell(ii) = ii
   enddo
+
   do ii=Noff2,Ntot-1
-    glob(id)%onshell(ii-Noff2 - 1) = ii
+    glob(id)%onshell(ii-Noff2+1) = ii
   enddo
   flavor =-999
   Nflavor = 0
   NflavorFinst = 0
-	
-	
-	
+
 	! co te petle robia, przeanalizuj
   do ii=1,Ntot
     ! checks if the particle has a correct color index
@@ -120,33 +121,34 @@ contains
     enddo
   enddo
 !
+
   glob(id)%symFac = NcolDof(process(1))*NcolDof(process(2))
   do ii=-NsizeFlavor,NsizeFlavor
     glob(id)%symFac = glob(id)%symFac * factorial(NflavorFinst(ii))
   enddo 
-!
 
-if(NZ.eq.1) then
+!
+!if(NZ.eq.1) then
     glob(id)%matrix_element => matrix_element_DrellYan
     glob(id)%all_amplitudes => all_amplitudes_DrellYan
     glob(id)%amplitude      => amplitude_DrellYan
-endif
+!endif
 
 !
-  if (sum(process(1:Ntot)).ne.0) then
+  if (sum(process(1:Ntot)).ne.2) then
     write(*,*) 'ERROR in amp4hef: process not possible'
     stop
   endif
   Nsum = 0
-  do jj=-NsizeFlavor,NsizeFlavor
-    if (Nflavor(jj).gt.0) Nsum = Nsum+1
-    if (jj.ne.0.and.Nflavor(jj).gt.1) call not_implemented
-  enddo
-  if (Nsum.gt.3) call not_implemented
-  if (Nsum.eq.1.and.Ntot.gt.7) call not_implemented
-  if (Nsum.gt.1.and.Ntot.gt.5) call not_implemented
-  if (Noff.gt.2) call not_implemented
-  if (Noff.gt.1.and.Nsum.gt.1.and.Ntot.gt.4) call not_implemented
+!  do jj=-NsizeFlavor,NsizeFlavor
+!    if (Nflavor(jj).gt.0) Nsum = Nsum+1
+!    if (jj.ne.0.and.Nflavor(jj).gt.1) call not_implemented
+!  enddo
+!  if (Nsum.gt.3) call not_implemented
+!  if (Nsum.eq.1.and.Ntot.gt.7) call not_implemented
+!  if (Nsum.gt.1.and.Ntot.gt.5) call not_implemented
+!  if (Noff.gt.2) call not_implemented
+!  if (Noff.gt.1.and.Nsum.gt.1.and.Ntot.gt.4) call not_implemented
 !
 ! Translation array for helicity ordering:
 ! first on-shell gluons, then anti-quarks. Quarks automatically get the

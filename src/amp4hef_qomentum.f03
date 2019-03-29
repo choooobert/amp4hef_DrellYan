@@ -176,7 +176,6 @@ contains
     obj%p%c11 = direction(        0 ) + direction(vecPerm(3))
     obj%p%c12 = direction(vecPerm(1)) - cmpnnt2ima
     obj%p%c21 = direction(vecPerm(1)) + cmpnnt2ima
-    obj%p%c22 = obj%p%c12*obj%p%c21/obj%p%c11 !p(l0)-p(l3) !
     call finish_p
     cmpnnt2ima = momentum(vecPerm(2))*imag
     obj%k%c11 = momentum(        0 ) + momentum(vecPerm(3))
@@ -463,6 +462,9 @@ contains
   subroutine set_direction( obj ,i3, i1 )
   class(qomentum_list_type) :: obj
   integer,intent(in) :: i1,i3
+  if (.not.obj%Q(i3)%lightlike) then
+    obj%Q(i3)%p = obj%Q(i1)%p
+  end if
   end subroutine
 
 

@@ -129,7 +129,6 @@ program mainMC
     read(eventUnit,*) instWeight,psWeight,partonLumi,alphaStrong
     end subroutine
   
-  
     function momSquared( qq ) result(rslt)
     intent(in) :: qq
     real(fltknd) :: qq(0:3),rslt

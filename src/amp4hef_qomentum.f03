@@ -69,7 +69,6 @@ module amp4hef_qomentum
     procedure(all_amp_interface),pointer :: all_amplitudes
     procedure(amp_interface),pointer :: amplitude
   contains
-    procedure :: set_direction
     procedure :: list_ang
     procedure :: list_ang_k
     procedure :: list_ang_sl
@@ -99,6 +98,8 @@ module amp4hef_qomentum
     procedure :: shift_kstr=>list_shift_kstr
     procedure :: cterm=>list_cterm
     procedure :: dterm=>list_dterm
+    procedure :: set_direction=>list_set_dir
+
   end type
 
 
@@ -192,6 +193,7 @@ contains
     obj%k = obj%p
     obj%kstr = 0
     obj%kapp = 0
+
   endif
   contains
     subroutine finish_p
@@ -221,6 +223,20 @@ contains
   obj%Rang%y2 = obj%p%c21*hh/obj%p%c11
   obj%angL%y1 =-obj%Rang%y2
   obj%angL%y2 = hh
+  write (*,*) " "
+  write (*,*) "spinor values : ", obj%sqrL%x1
+  write (*,*) "spinor values : ", obj%sqrL%x2
+
+  write (*,*) "spinor values : ", obj%Rsqr%x1
+  write (*,*) "spinor values : ", obj%Rsqr%x2
+
+  write (*,*) "spinor values : ", obj%angL%y1
+  write (*,*) "spinor values : ", obj%angL%y2
+
+  write (*,*) "spinor values : ", obj%Rang%y1
+  write (*,*) "spinor values : ", obj%Rang%y2
+  write (*,*) " "
+
   end subroutine
 
 
@@ -459,12 +475,18 @@ contains
 ! ask for integer arguments, 
 ! eg. l%ang(1,2)= l%p(1)%angL*l%p(2)%Rang etc.
 
-  subroutine set_direction( obj ,i3, i1 )
+  subroutine list_set_dir( obj ,i3, i1 )
   class(qomentum_list_type) :: obj
   integer,intent(in) :: i1,i3
+  complex(fltknd) :: rslt
+  write (*,*) "set direction formula"
+  obj%Q(i3)%p = obj%Q(i1)%p
   if (.not.obj%Q(i3)%lightlike) then
-    obj%Q(i3)%p = obj%Q(i1)%p
+    obj%Q(i3)%direction = obj%Q(i1)%direction
+   else
+    obj%Q(i3)%direction = obj%Q(i1)%momenta
   end if
+    call put_spinors(obj%Q(i3))
   end subroutine
 
 
@@ -475,6 +497,9 @@ contains
   integer,intent(in) :: i1,i2
   complex(fltknd) :: rslt
   rslt = obj%Q(i1)%angL*obj%Q(i2)%Rang
+  write (*,*) "spinor values in function ang : ", obj%Q(i1)%angL%y1
+  write (*,*) "spinor values in function ang : ", obj%Q(i1)%angL%y2
+
   end function
   
   function list_ang_k( obj ,i1 ,i3 ,i2 ) result(rslt)

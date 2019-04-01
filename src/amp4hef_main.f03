@@ -79,7 +79,6 @@ contains
   integer,intent(in) :: Ntotal ,Noffshell ,NZbos ,process(*)
   integer :: ii,jj,kk,Noff2,Nsum
   integer :: NflavorFinst(-NsizeFlavor:NsizeFlavor)
-  write (*,*) "Number of Z bosons: ", NZbos
 !
   if (initz) call init_amp4hef
   call increase_glob( id )
@@ -190,11 +189,14 @@ contains
   associate( Ntot=>glob(id)%Ntot ,Noff=>glob(id)%Noff )
   Noff2 = Noff+1
   do ii=1,Noff
+    write (*,*) "momentum number : ", ii
     call glob(id)%Q(ii)%fill( momenta(0:3,ii) ,directions(0:3,ii) )
   enddo
   do ii=Noff2,(Ntot-1)
+      write (*,*) "momentum number : ", ii
     call glob(id)%Q(ii)%fill( momenta(0:3,ii) )
   enddo
+      write (*,*) "momentum number : ", Ntot
       call glob(id)%Q(Ntot)%fill( momenta(0:3,Ntot) )
 
   do ii=1,Noff

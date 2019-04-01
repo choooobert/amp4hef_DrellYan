@@ -86,7 +86,7 @@ contains
 !what is it for?
 !  T%Q(Ntot-1)   = Tin%Q(Tin%flavor(    1        ,antiq))
 !  T%Q(Ntot)     = Tin%Q(Tin%flavor(    1        ,quark))
-    write (*,*) "helicity : ", helicity(i3)
+!    write (*,*) "helicity : ", helicity(i3)
 	rslt = 0
 	if (helicity(i2).eq.-1.and.helicity(i3).eq.-1.and.helicity(i4).eq.1) then 
 	rslt = amp_1(T) !+ amp_7(T) + amp_13(T)
@@ -118,6 +118,8 @@ end function
 	i1=2 ;i2=3 ;i3=4; i4=5; i5=1
 	!
 	rslt = 0
+	write (*,*) "first value: ", T%ang(i1,i2)
+	write (*,*) "final value: ", T%ang(i1,i2)
 	xx= T%sqr(i4,i5)*T%sqr(i4,i5)* T%ang(i1,i2)
 	yy = T%ang(i3,i1) - T%ang(i3,i2)*T%sqr(i2,i1)/ T%Q(i1)%kapp
 	zz = (-T%Q(i1)%kapp*T%Q(i1)%kstr-T%ang(i2,i1,i2))*(-T%Q(i5)%kapp*T%Q(i5)%kstr-T%ang(i4,i5,i4))*T%Q(i1)%kstr*T%Q(i5)%kapp

@@ -26,6 +26,7 @@ contains
   complex(fltknd) :: amp(12,4)
   integer :: ii,NhelSum,Nminus2, NhelConf, Nperm, jj
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff )
+
     NhelConf = 12
 	NhelSum = 3
 	NPerm = 2
@@ -72,16 +73,15 @@ contains
   class(qomentum_list_type),intent(in) :: Tin
   integer,intent(in) :: helicity(:), perm(:)
   complex(fltknd) :: rslt
-  type(qomentum_list_type) :: T
+ ! type(qomentum_list_type) :: T
   integer :: hel(-1:NsizeProc)
-  integer :: i1, i2, i3, i4, i5
+  integer :: i1, i2, i3, i4, i5, ii
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff ,offshell=>Tin%offshell )
-
   hel(3:5) = helicity
 	!
 	i1=2 ;i2=3 ;i3=4; i4=5; i5=1
 	!
-  T%Ntot = Ntot
+!  T%Ntot = Ntot
 
 !what is it for?
 !  T%Q(Ntot-1)   = Tin%Q(Tin%flavor(    1        ,antiq))
@@ -89,20 +89,20 @@ contains
 !    write (*,*) "helicity : ", helicity(i3)
 	rslt = 0
 	if (helicity(i2).eq.-1.and.helicity(i3).eq.-1.and.helicity(i4).eq.1) then 
-	rslt = amp_1(T) !+ amp_7(T) + amp_13(T)
+	rslt = amp_1(Tin) !+ amp_7(Tin) + amp_13(Tin)
 	else if (helicity(i2).eq.-1.and.helicity(i3).eq.0.and.helicity(i4).eq.1) then 
-	rslt = amp_2(T) !+ amp_8(T) + amp_14(T)
+	rslt = amp_2(Tin) !+ amp_8(Tin) + amp_14(Tin)
 	else if (helicity(i2).eq.-1.and.helicity(i3).eq.1.and.helicity(i4).eq.1) then 
-	rslt = amp_3(T) !+ amp_9(T) + amp_15(T)
+	rslt = amp_3(Tin) !+ amp_9(Tin) + amp_15(Tin)
 	
 	else if (helicity(i2).eq.1.and.helicity(i3).eq.-1.and.helicity(i4).eq.-1) then 
-	rslt = amp_1(T) !+ amp_7(T) + amp_13(T)
+	rslt = amp_1(Tin) !+ amp_7(Tin) + amp_13(Tin)
 	rslt = conjg(rslt)
 	else if (helicity(i2).eq.1.and.helicity(i3).eq.0.and.helicity(i4).eq.-1) then 
-	rslt = amp_2(T) !+ amp_8(T) + amp_14(T)
+	rslt = amp_2(Tin) !+ amp_8(Tin) + amp_14(Tin)
 	rslt = conjg(rslt)
 	else if (helicity(i2).eq.1.and.helicity(i3).eq.1.and.helicity(i4).eq.-1) then 
-	rslt = amp_3(T) !+ amp_9(T) + amp_15(T)
+	rslt = amp_3(Tin) !+ amp_9(Tin) + amp_15(Tin)
 	rslt = conjg(rslt)
 	end if
   end associate
@@ -118,19 +118,25 @@ end function
 	i1=2 ;i2=3 ;i3=4; i4=5; i5=1
 	!
 	rslt = 0
-	write (*,*) "first value: ", T%ang(i1,i2)
-	write (*,*) "final value: ", T%ang(i1,i2)
+    write (*,*) "In amp1"
+	write (*,*) "first value: ", T%ang(i1,i3)
+	write (*,*) "second value: ", T%ang(i2,i3)
+	write (*,*) "third value",  T%Q(i1)%kapp
 	xx= T%sqr(i4,i5)*T%sqr(i4,i5)* T%ang(i1,i2)
 	yy = T%ang(i3,i1) - T%ang(i3,i2)*T%sqr(i2,i1)/ T%Q(i1)%kapp
 	zz = (-T%Q(i1)%kapp*T%Q(i1)%kstr-T%ang(i2,i1,i2))*(-T%Q(i5)%kapp*T%Q(i5)%kstr-T%ang(i4,i5,i4))*T%Q(i1)%kstr*T%Q(i5)%kapp
+	write (*,*) "xx : ", xx
+    write (*,*) "yy : ", yy
+    write (*,*) "zz : ", T%Q(i1)%kstr*T%Q(i5)%kapp
+
 	if (xx.ne.0.and.yy.ne.0.and.zz.ne.0) rslt = 2*sqrt_2*xx*yy/zz
-	write (*,*) "In amp1"
 	end function
 	
 	function amp_2(T) result(rslt)
 	type(qomentum_list_type),intent(in) :: T
 	complex(fltknd) :: rslt,tt,uu,vv,xx,ww,yy,zz,m
 	integer :: i1, i2, i3, i4, i5
+	write (*,*) "In amp2"
 	!
 	i1=2 ;i2=3 ;i3=4; i4=5; i5=1
 	!
@@ -144,13 +150,13 @@ end function
 	yy = T%sqr(i5,i3) - T%ang(i5,i4)*T%sqr(i4,i3)/T%Q(i5)%kstr
 	zz = T%ang(i3,i1) - T%ang(i3,i2)*T%sqr(i2,i1)/T%Q(i1)%kapp
 	if (tt.ne.0.and.uu.ne.0.and.ww.ne.0) rslt = 4*tt/uu*(m*vv/ww*xx-yy*zz/m)
-    write (*,*) "In amp2"
 	end function
 	
 	function amp_3(T) result(rslt)
 	type(qomentum_list_type),intent(in) :: T
 	complex(fltknd) :: rslt,xx,yy,zz
 	integer :: i1, i2, i3, i4, i5
+	write (*,*) "In amp3"
 	!
 	i1=2 ;i2=3 ;i3=4; i4=5; i5=1
 	!
@@ -159,7 +165,6 @@ end function
 	yy = T%sqr(i5,i3) - T%ang(i5,i4)*T%sqr(i4,i3)/T%Q(i5)%kstr
 	zz = (-T%Q(i1)%kapp*T%Q(i1)%kstr-T%ang(i2,i1,i2))*(-T%Q(i5)%kapp*T%Q(i5)%kstr-T%ang(i4,i5,i4))*T%Q(i1)%kstr*T%Q(i5)%kapp
 	if (xx.ne.0.and.yy.ne.0.and.zz.ne.0) rslt = 2*sqrt_2*xx*yy/zz
-    write (*,*) "In amp3"
 	end function
 	
 

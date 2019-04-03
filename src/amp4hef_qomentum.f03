@@ -11,6 +11,7 @@ module amp4hef_qomentum
   integer,parameter :: vecPerm(3)=[3,1,2]
   integer,parameter :: NsizeProc=12
   integer,parameter :: NsizeFlavor=3
+  real(fltknd), parameter:: MZ = 8315.287819239998
 
   complex(fltknd),save,protected :: imag
   logical,save :: initd=.false.
@@ -46,8 +47,8 @@ module amp4hef_qomentum
     type(Rang_type) :: Rang
     type(slashed_type) :: p ! direction
     type(slashed_type) :: k ! momentum
-    real(fltknd) :: momenta(0:3),direction(0:3)
     complex(fltknd) :: kapp,kstr
+    real(fltknd) :: momentum (0:3), direction(0:3)
     logical :: lightlike
   contains
     procedure :: qom_fill_r
@@ -166,30 +167,32 @@ contains
   end subroutine
 
 
-  subroutine qom_fill_r( obj ,momentum ,direction )
+  subroutine qom_fill_r( obj ,mom ,dir )
   class(qomentum_type) :: obj
-  real(fltknd),intent(in) :: momentum(0:3),direction(0:3)
-  optional :: direction
+  real(fltknd),intent(in) :: mom(0:3),dir(0:3)
+  optional :: dir
   complex(fltknd) :: cmpnnt2ima
-  if (present(direction)) then
+  if (present(dir)) then
+    obj%direction(0:3) = dir(0:3)
     obj%lightlike = .false.
-    cmpnnt2ima = direction(vecPerm(2))*imag
-    obj%p%c11 = direction(        0 ) + direction(vecPerm(3))
-    obj%p%c12 = direction(vecPerm(1)) - cmpnnt2ima
-    obj%p%c21 = direction(vecPerm(1)) + cmpnnt2ima
+    cmpnnt2ima = dir(vecPerm(2))*imag
+    obj%p%c11 = dir(        0 ) + dir(vecPerm(3))
+    obj%p%c12 = dir(vecPerm(1)) - cmpnnt2ima
+    obj%p%c21 = dir(vecPerm(1)) + cmpnnt2ima
     call finish_p
-    cmpnnt2ima = momentum(vecPerm(2))*imag
-    obj%k%c11 = momentum(        0 ) + momentum(vecPerm(3))
-    obj%k%c12 = momentum(vecPerm(1)) - cmpnnt2ima
-    obj%k%c21 = momentum(vecPerm(1)) + cmpnnt2ima
-    obj%k%c22 = momentum(        0 ) - momentum(vecPerm(3))
+    cmpnnt2ima = mom(vecPerm(2))*imag
+    obj%k%c11 = mom(        0 ) + mom(vecPerm(3))
+    obj%k%c12 = mom(vecPerm(1)) - cmpnnt2ima
+    obj%k%c21 = mom(vecPerm(1)) + cmpnnt2ima
+    obj%k%c22 = mom(        0 ) - mom(vecPerm(3))
   else
     obj%lightlike = .true.
-    cmpnnt2ima = momentum(vecPerm(2))*imag
-    obj%p%c11 = momentum(        0 ) + momentum(vecPerm(3))
-    obj%p%c12 = momentum(vecPerm(1)) - cmpnnt2ima
-    obj%p%c21 = momentum(vecPerm(1)) + cmpnnt2ima
+    cmpnnt2ima = mom(vecPerm(2))*imag
+    obj%p%c11 = mom(        0 ) + mom(vecPerm(3))
+    obj%p%c12 = mom(vecPerm(1)) - cmpnnt2ima
+    obj%p%c21 = mom(vecPerm(1)) + cmpnnt2ima
     call finish_p
+    obj%momentum(0:3)  = mom(0:3)
     obj%k = obj%p
     obj%kstr = 0
     obj%kapp = 0
@@ -223,20 +226,6 @@ contains
   obj%Rang%y2 = obj%p%c21*hh/obj%p%c11
   obj%angL%y1 =-obj%Rang%y2
   obj%angL%y2 = hh
-  write (*,*) " "
-  write (*,*) "spinor values : ", obj%sqrL%x1
-  write (*,*) "spinor values : ", obj%sqrL%x2
-
-  write (*,*) "spinor values : ", obj%Rsqr%x1
-  write (*,*) "spinor values : ", obj%Rsqr%x2
-
-  write (*,*) "spinor values : ", obj%angL%y1
-  write (*,*) "spinor values : ", obj%angL%y2
-
-  write (*,*) "spinor values : ", obj%Rang%y1
-  write (*,*) "spinor values : ", obj%Rang%y2
-  write (*,*) " "
-
   end subroutine
 
 
@@ -479,14 +468,14 @@ contains
   class(qomentum_list_type) :: obj
   integer,intent(in) :: i1,i3
   complex(fltknd) :: rslt
-  write (*,*) "set direction formula"
-  obj%Q(i3)%p = obj%Q(i1)%p
-  if (.not.obj%Q(i3)%lightlike) then
-    obj%Q(i3)%direction = obj%Q(i1)%direction
-   else
-    obj%Q(i3)%direction = obj%Q(i1)%momenta
-  end if
-    call put_spinors(obj%Q(i3))
+  real(fltknd):: direction(0:3)
+  if (obj%Q(i3)%lightlike) then
+    direction(0:3) = obj%Q(i3)%momentum(0:3) - MZ*MZ/obj%list_ang_k(i1, i3, i1)* obj%Q(i3)%momentum(0:3)
+  else
+    direction(0:3) = obj%Q(i3)%momentum(0:3) - MZ*MZ/obj%list_ang_k(i1, i3, i1)* obj%Q(i3)%direction(0:3)
+  endif
+  call obj%Q(i3)%qom_fill_r( obj%Q(i3)%momentum(0:3), direction(0:3))
+  call put_spinors(obj%Q(i3))
   end subroutine
 
 
@@ -495,11 +484,9 @@ contains
 ! <12>
   class(qomentum_list_type) :: obj
   integer,intent(in) :: i1,i2
+  integer :: i
   complex(fltknd) :: rslt
   rslt = obj%Q(i1)%angL*obj%Q(i2)%Rang
-  write (*,*) "spinor values in function ang : ", obj%Q(i1)%angL%y1
-  write (*,*) "spinor values in function ang : ", obj%Q(i1)%angL%y2
-
   end function
   
   function list_ang_k( obj ,i1 ,i3 ,i2 ) result(rslt)

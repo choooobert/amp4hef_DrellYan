@@ -189,20 +189,18 @@ contains
   associate( Ntot=>glob(id)%Ntot ,Noff=>glob(id)%Noff )
   Noff2 = Noff+1
   do ii=1,Noff
-    write (*,*) "momentum number : ", ii
     call glob(id)%Q(ii)%fill( momenta(0:3,ii) ,directions(0:3,ii) )
   enddo
   do ii=Noff2,(Ntot-1)
-      write (*,*) "momentum number : ", ii
     call glob(id)%Q(ii)%fill( momenta(0:3,ii) )
   enddo
-      write (*,*) "momentum number : ", Ntot
       call glob(id)%Q(Ntot)%fill( momenta(0:3,Ntot) )
 
   do ii=1,Noff
     glob(id)%Q(ii)%kstr = glob(id)%ang(ii,ii,Noff2)/glob(id)%sqr(ii,Noff2)
     glob(id)%Q(ii)%kapp = glob(id)%ang(Noff2,ii,ii)/glob(id)%ang(Noff2,ii)
   enddo
+
   end associate
   end subroutine
 

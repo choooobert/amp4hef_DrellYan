@@ -90,7 +90,6 @@ contains
   Noff = Noffshell
   Noff2 = Noff+2
   NZ = NZbos
-
   glob(id)%offshell = 0
   glob(id)%onshell = 0
   do ii=1,Noff
@@ -200,7 +199,6 @@ contains
     glob(id)%Q(ii)%kstr = glob(id)%ang(ii,ii,Noff2)/glob(id)%sqr(ii,Noff2)
     glob(id)%Q(ii)%kapp = glob(id)%ang(Noff2,ii,ii)/glob(id)%ang(Noff2,ii)
   enddo
-
   end associate
   end subroutine
 

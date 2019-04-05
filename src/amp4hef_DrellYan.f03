@@ -2,21 +2,20 @@ module amp4hef_DrellYan
   use amp4hef_io
   use amp4hef_aux
   use amp4hef_qomentum
-! TODO: check if set_direction work correctly
   implicit none
   private
   public :: fill_matrices_DrellYan,matrix_element_DrellYan ,amplitude_DrellYan ,all_amplitudes_DrellYan
 
   real, parameter :: sqrt_2 = 1.41421356237_fltknd
-  real, parameter :: MZ = 8315.287819239998_fltknd
+  real, parameter :: MZ = 0.8315287819239998E+04
   real, parameter :: cV = 1._fltknd
   real, parameter :: cA = 1.26_fltknd
 
   integer,parameter :: gluon=0 ,quark=1 ,antiq=-1, Zboson=2
-	 integer,parameter :: helTable_DrellYan(3,12)=reshape(&
-	 [-1,-1,-1,	 -1,-1, 1,	-1, 0,-1,	-1, 0, 1,	-1, 1,-1,	 -1, 1,1,&
-	   1,-1,-1,   1,-1, 1,	 1, 0,-1,	 1, 0, 1,	 1, 1,-1,	  1, 1, 1&
-	 ], [3,12])
+	 integer,parameter :: helTable_DrellYan(3,6)=reshape(&
+	 [ -1,1,-1,	 -1, 1, 0,	-1, 1, 1,&
+	   1,-1,-1,   1,-1, 0,	 1,-1, 1 &
+	 ], [3,6])
 
   integer,allocatable,save :: mtx_4_sqr(:,:)
 
@@ -29,7 +28,7 @@ contains
   integer :: ii,NhelSum,Nminus2, NhelConf, Nperm, jj
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff )
 
-    NhelConf = 12
+    NhelConf = 6
 	NhelSum = 3
 	NPerm = 2
 !
@@ -37,7 +36,7 @@ contains
 	do ii=1, (NhelConf/2)
 		do jj=1, Nperm
       amp(ii, jj) = amplitude_DrellYan(Tin ,helTable_DrellYan(:,ii), perTable(1:NPerm,jj))
-      amp(NhelConf-ii+1,jj) =(cV-cA)*conjg(amp(ii,jj))
+      amp(NhelConf-ii+1,jj) =conjg(amp(ii,jj))
       rslt = (cV+cA)*amp(ii, jj)+ (cV-cA)*amp(NhelConf-ii+1,jj)
 !      write(*,'(2e16.8,99i3)') amp(ii),helTable_DrellYan(1:NhelSum,ii) !DEBUG
     enddo
@@ -55,7 +54,7 @@ contains
   integer :: ii,jj,NhelSum
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff )
 	NhelSum = 3
-	NhelConf =12
+	NhelConf= 6
 	Nperm = 2
   do ii=1,(NhelConf/2)
   do jj=1,Nperm
@@ -80,18 +79,17 @@ contains
   complex(fltknd) :: rslt
  ! type(qomentum_list_type) :: T
   integer :: hel(-1:NsizeProc)
-  integer :: i1, i2, i3, i4, i5, ii
+  integer ::  i2, i3, i4
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff ,offshell=>Tin%offshell )
   hel(3:5) = helicity
 	!
-	i1=perm(1) ;i2=3 ;i3=5; i4=4; i5=perm(2)
+	 i2=1 ;i3=3; i4=2
 	!
 !  T%Ntot = Ntot
 
 !what is it for?
 !  T%Q(Ntot-1)   = Tin%Q(Tin%flavor(    1        ,antiq))
 !  T%Q(Ntot)     = Tin%Q(Tin%flavor(    1        ,quark))
-!    write (*,*) "helicity : ", helicity(i3)
 	rslt = 0
 	if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.-1) then
 	rslt = 24*( amp_01(Tin, perm) + amp_07(Tin, perm) + amp_13(Tin, perm) &
@@ -103,6 +101,12 @@ contains
 	rslt = 24*( amp_03(Tin, perm) + amp_09(Tin, perm) + amp_15(Tin, perm) &
 	          + amp_21(Tin, perm) + amp_27(Tin, perm) + amp_33(Tin, perm) )
 	end if
+
+
+
+
+
+
   end associate
 end function
 
@@ -126,7 +130,6 @@ end function
 	xx= T%sqr(i4,i5)*T%sqr(i4,i5)* T%ang(i1,i2)
 	yy = T%ang(i3,i1) - T%ang(i3,i2)*T%sqr(i2,i1)/ T%Q(i1)%kapp
 	zz = (-T%Q(i1)%kapp*T%Q(i1)%kstr-T%ang(i2,i1,i2))*(-T%Q(i5)%kapp*T%Q(i5)%kstr-T%ang(i4,i5,i4))*T%Q(i1)%kstr*T%Q(i5)%kapp
-
 	if (xx.ne.0.and.yy.ne.0.and.zz.ne.0) rslt = 2*sqrt_2*xx*yy/zz
 	end function
 	
@@ -138,7 +141,6 @@ end function
 	!
 	i1=perm(2) ;i2=3 ;i3=4; i4=5; i5=perm(1)
 	!
-    call T%set_direction(i3, i4)
 	rslt = 0
 	call T%set_direction(i3, i4)
 	tt = T%sqr(i4,i5)*T%ang(i1,i2)
@@ -450,62 +452,6 @@ end function
     if (xx.ne.0.and.yy.ne.0.and.zz.ne.0) rslt = 2*sqrt_2*xx*yy/zz
     end function
 
-  
-	function colorSum( Nminus2 ,a ) result(rslt)
-  integer,intent(in) :: Nminus2
-  complex(fltknd),intent(in) :: a(factorial(Nminus2))
-  complex(fltknd) :: rslt ,z(factorial(5)) ,uu,vv,ww,xx,yy
-  integer :: Nadj,i
-!
-  Nadj = Ncolor(2)-1
-!
-  select case (Nminus2)
-
-  case (1)
-    rslt = conjg(a(1))*a(1) * Nadj
-
-  case (2)
-    z(1:2) = conjg(a(1:2))
-    uu = z(1)*a(1) + z(2)*a(2)
-    vv =-z(1)*a(2) - z(2)*a(1)
-    rslt = ( vv + Nadj*uu ) * Nadj/Ncolor(1)
-   
-  case (3)
-    z(1:6) = conjg(a(1:6))
-    uu = z(1)*a(1) + z(2)*a(2) + z(3)*a(3) + z(4)*a(4) + z(5)*a(5) + z(6)*a(6)
-    vv = z(1)*( a(4) - a(2) - a(6) ) &
-       + z(2)*( a(5) - a(1) - a(3) ) &
-       + z(3)*( a(6) - a(2) - a(4) ) &
-       + z(4)*( a(1) - a(3) - a(5) ) &
-       + z(5)*( a(2) - a(4) - a(6) ) &
-       + z(6)*( a(3) - a(1) - a(5) )
-    ww = z(1)*( 2*a(4) + a(3) + a(5) ) &
-       + z(2)*( 2*a(5) + a(4) + a(6) ) &
-       + z(3)*( 2*a(6) + a(1) + a(5) ) &
-       + z(4)*( 2*a(1) + a(2) + a(6) ) &
-       + z(5)*( 2*a(2) + a(1) + a(3) ) &
-       + z(6)*( 2*a(3) + a(2) + a(4) )
-    rslt = ( ww + Nadj*( vv + Nadj*uu ) ) * Nadj/Ncolor(2)
-   
-  case (4)
-    associate(m=>mtx_4_sqr)
-    z(1:24) = conjg(a(1:24))
-    uu=0 ;vv=0 ;ww=0 ;xx=0
-    do i=1,24
-      uu = uu + z(i)*( a(m(1,i)) )
-      vv = vv + z(i)*( sum(a(m(2:7,i))) - sum(a(m(8:10,i))) )
-      ww = ww + z(i)*( 2*sum(a(m(11:12,i))) + sum(a(m(13:18,i))) &
-                             - sum(a(m(19:22,i))) - 3*a(m(23,i)) )
-      xx = xx - z(i)*( 4*a(m(24,i)) + 2*sum(a(m(25:31,i))) + sum(a(m(32:36,i))) )
-    enddo
-    rslt = ( xx + Nadj*( ww + Nadj*( vv + Nadj*uu ) ) ) * Nadj/Ncolor(3)
-    end associate
-
-  case default
-    rslt = 0
-
-  end select
-  end function  
 
 
   subroutine fill_matrices_DrellYan

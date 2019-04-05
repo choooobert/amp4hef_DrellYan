@@ -193,8 +193,8 @@ contains
   do ii=Noff2,(Ntot-1)
     call glob(id)%Q(ii)%fill( momenta(0:3,ii) )
   enddo
-      call glob(id)%Q(Ntot)%fill( momenta(0:3,Ntot) )
 
+      call glob(id)%Q(Ntot)%fill( momenta(0:3,Ntot)  )
   do ii=1,Noff
     glob(id)%Q(ii)%kstr = glob(id)%ang(ii,ii,Noff2)/glob(id)%sqr(ii,Noff2)
     glob(id)%Q(ii)%kapp = glob(id)%ang(Noff2,ii,ii)/glob(id)%ang(Noff2,ii)

@@ -126,11 +126,11 @@ contains
   enddo 
 
 !
-!if(NZ.eq.1) then
+if(NZ.eq.1) then
     glob(id)%matrix_element => matrix_element_DrellYan
     glob(id)%all_amplitudes => all_amplitudes_DrellYan
     glob(id)%amplitude      => amplitude_DrellYan
-!endif
+endif
 
 !
   if (sum(process(1:Ntot)).ne.2) then

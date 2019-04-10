@@ -3,6 +3,7 @@ program mainMC
   implicit none
   
   integer,parameter :: eventUnit=21
+  real(fltknd),parameter :: alphaWeak = 1./29.
   real(fltknd),parameter :: pi=3.1415926535897932384626433832795_fltknd
   
   logical :: exitLoop
@@ -90,7 +91,7 @@ program mainMC
     call matrix_element_b( id1 ,ampSquared )
 !   Determine the total weight of the event.
     totalWeight = cnstWeight / flux * instWeight * psWeight * partonLumi &
-                * ampSquared * alphaStrong**Nfinst
+                * ampSquared * alphaStrong**Nfinst *alphaWeak
 
 !   Gather statistics.
     sumW1 = sumW1 + totalWeight

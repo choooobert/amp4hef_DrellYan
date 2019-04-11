@@ -74,39 +74,38 @@ contains
   end subroutine
 
 
-  subroutine put_process( id ,Ntotal ,Noffshell ,process )
+  subroutine put_process( id ,Ntotal ,Noffshell ,NZbos ,process )
   integer,intent(out) :: id
-  integer,intent(in) :: Ntotal ,Noffshell ,process(*)
-  integer :: ii,jj,kk,Noff2,Nsum, NZ
+  integer,intent(in) :: Ntotal ,Noffshell ,NZbos ,process(*)
+  integer :: ii,jj,kk,Noff2,Nsum
   integer :: NflavorFinst(-NsizeFlavor:NsizeFlavor)
 !
   if (initz) call init_amp4hef
   call increase_glob( id )
 !
-  associate( Ntot=>glob(id)%Ntot ,Noff=>glob(id)%Noff &
+  associate( Ntot=>glob(id)%Ntot ,Noff=>glob(id)%Noff ,NZ=>glob(id)%NZ &
             ,Nflavor=>glob(id)%Nflavor ,flavor=>glob(id)%flavor &
             ,NhelOrder=>glob(id)%NhelOrder,helOrder=>glob(id)%helOrder )
   Ntot = Ntotal
   Noff = Noffshell
-	NZ = 1
   Noff2 = Noff+2
+  NZ = NZbos
   glob(id)%offshell = 0
   glob(id)%onshell = 0
   do ii=1,Noff
     glob(id)%offshell(ii) = ii
   enddo
-	glob(id)%Z=Noff+1
-  do ii=Noff2,Ntot
-    glob(id)%onshell(ii-Noff-1) = ii
+
+  do ii=Noff2,Ntot-1
+    glob(id)%onshell(ii-Noff2+1) = ii
   enddo
   flavor =-999
   Nflavor = 0
   NflavorFinst = 0
-	
-	
-	
+
 	! co te petle robia, przeanalizuj
   do ii=1,Ntot
+    ! checks if the particle has a correct color index
     if (process(ii).lt.-NsizeFlavor.or.NsizeFlavor.lt.process(ii)) then
       write(*,*) 'ERROR in amp4hef: flavor',process(ii),' not defined'
       stop
@@ -120,34 +119,40 @@ contains
     enddo
   enddo
 !
+
   glob(id)%symFac = NcolDof(process(1))*NcolDof(process(2))
   do ii=-NsizeFlavor,NsizeFlavor
     glob(id)%symFac = glob(id)%symFac * factorial(NflavorFinst(ii))
   enddo 
+
 !
+if(NZ.eq.1) then
     glob(id)%matrix_element => matrix_element_DrellYan
     glob(id)%all_amplitudes => all_amplitudes_DrellYan
     glob(id)%amplitude      => amplitude_DrellYan
+endif
 
 !
-  if (sum(process(1:Ntot)).ne.0) then
+  if (sum(process(1:Ntot)).ne.2) then
     write(*,*) 'ERROR in amp4hef: process not possible'
     stop
   endif
   Nsum = 0
-  do jj=-NsizeFlavor,NsizeFlavor
-    if (Nflavor(jj).gt.0) Nsum = Nsum+1
-    if (jj.ne.0.and.Nflavor(jj).gt.1) call not_implemented
-  enddo
-  if (Nsum.gt.3) call not_implemented
-  if (Nsum.eq.1.and.Ntot.gt.7) call not_implemented
-  if (Nsum.gt.1.and.Ntot.gt.5) call not_implemented
-  if (Noff.gt.2) call not_implemented
-  if (Noff.gt.1.and.Nsum.gt.1.and.Ntot.gt.4) call not_implemented
+!  do jj=-NsizeFlavor,NsizeFlavor
+!    if (Nflavor(jj).gt.0) Nsum = Nsum+1
+!    if (jj.ne.0.and.Nflavor(jj).gt.1) call not_implemented
+!  enddo
+!  if (Nsum.gt.3) call not_implemented
+!  if (Nsum.eq.1.and.Ntot.gt.7) call not_implemented
+!  if (Nsum.gt.1.and.Ntot.gt.5) call not_implemented
+!  if (Noff.gt.2) call not_implemented
+!  if (Noff.gt.1.and.Nsum.gt.1.and.Ntot.gt.4) call not_implemented
 !
 ! Translation array for helicity ordering:
 ! first on-shell gluons, then anti-quarks. Quarks automatically get the
 ! opposite helicity of the anti-quark. Off-shell (anti)-quarks have helicity!
+
+!what does it do? need to rewrite it to adjust to 3 possible polarizations of massive bosons
   NhelOrder = 0
   helOrder = 0
   do jj=Noff2,Ntot
@@ -185,9 +190,11 @@ contains
   do ii=1,Noff
     call glob(id)%Q(ii)%fill( momenta(0:3,ii) ,directions(0:3,ii) )
   enddo
-  do ii=Noff2,Ntot
+  do ii=Noff2,(Ntot-1)
     call glob(id)%Q(ii)%fill( momenta(0:3,ii) )
   enddo
+
+      call glob(id)%Q(Ntot)%fill( momenta(0:3,Ntot)  )
   do ii=1,Noff
     glob(id)%Q(ii)%kstr = glob(id)%ang(ii,ii,Noff2)/glob(id)%sqr(ii,Noff2)
     glob(id)%Q(ii)%kapp = glob(id)%ang(Noff2,ii,ii)/glob(id)%ang(Noff2,ii)

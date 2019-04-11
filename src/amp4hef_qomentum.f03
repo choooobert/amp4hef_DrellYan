@@ -11,6 +11,7 @@ module amp4hef_qomentum
   integer,parameter :: vecPerm(3)=[3,1,2]
   integer,parameter :: NsizeProc=12
   integer,parameter :: NsizeFlavor=3
+  real(fltknd), parameter:: MZ = 8315.287819239998
 
   complex(fltknd),save,protected :: imag
   logical,save :: initd=.false.
@@ -47,6 +48,7 @@ module amp4hef_qomentum
     type(slashed_type) :: p ! direction
     type(slashed_type) :: k ! momentum
     complex(fltknd) :: kapp,kstr
+    real(fltknd) :: momentum (0:3), direction(0:3)
     logical :: lightlike
   contains
     procedure :: qom_fill_r
@@ -57,8 +59,8 @@ module amp4hef_qomentum
   end type
 
   type :: qomentum_list_type
-    integer :: Ntot,Noff
-    integer :: onshell(NsizeProc),offshell(2), Z
+    integer :: Ntot,Noff, NZ
+    integer :: onshell(NsizeProc),offshell(2)
     integer :: Nflavor(-NsizeFlavor:NsizeFlavor)
     integer :: flavor(NsizeProc,-NsizeFlavor:NsizeFlavor)
     integer :: symFac,sizeHel,sizePerm
@@ -97,6 +99,8 @@ module amp4hef_qomentum
     procedure :: shift_kstr=>list_shift_kstr
     procedure :: cterm=>list_cterm
     procedure :: dterm=>list_dterm
+    procedure :: set_direction=>list_set_dir
+
   end type
 
 
@@ -163,30 +167,32 @@ contains
   end subroutine
 
 
-  subroutine qom_fill_r( obj ,momentum ,direction )
+  subroutine qom_fill_r( obj ,mom ,dir )
   class(qomentum_type) :: obj
-  real(fltknd),intent(in) :: momentum(0:3),direction(0:3)
-  optional :: direction
+  real(fltknd),intent(in) :: mom(0:3),dir(0:3)
+  optional :: dir
   complex(fltknd) :: cmpnnt2ima
-  if (present(direction)) then
+  if (present(dir)) then
+    obj%direction(0:3) = dir(0:3)
     obj%lightlike = .false.
-    cmpnnt2ima = direction(vecPerm(2))*imag
-    obj%p%c11 = direction(        0 ) + direction(vecPerm(3))
-    obj%p%c12 = direction(vecPerm(1)) - cmpnnt2ima
-    obj%p%c21 = direction(vecPerm(1)) + cmpnnt2ima
+    cmpnnt2ima = dir(vecPerm(2))*imag
+    obj%p%c11 = dir(        0 ) + dir(vecPerm(3))
+    obj%p%c12 = dir(vecPerm(1)) - cmpnnt2ima
+    obj%p%c21 = dir(vecPerm(1)) + cmpnnt2ima
     call finish_p
-    cmpnnt2ima = momentum(vecPerm(2))*imag
-    obj%k%c11 = momentum(        0 ) + momentum(vecPerm(3))
-    obj%k%c12 = momentum(vecPerm(1)) - cmpnnt2ima
-    obj%k%c21 = momentum(vecPerm(1)) + cmpnnt2ima
-    obj%k%c22 = momentum(        0 ) - momentum(vecPerm(3))
+    cmpnnt2ima = mom(vecPerm(2))*imag
+    obj%k%c11 = mom(        0 ) + mom(vecPerm(3))
+    obj%k%c12 = mom(vecPerm(1)) - cmpnnt2ima
+    obj%k%c21 = mom(vecPerm(1)) + cmpnnt2ima
+    obj%k%c22 = mom(        0 ) - mom(vecPerm(3))
   else
     obj%lightlike = .true.
-    cmpnnt2ima = momentum(vecPerm(2))*imag
-    obj%p%c11 = momentum(        0 ) + momentum(vecPerm(3))
-    obj%p%c12 = momentum(vecPerm(1)) - cmpnnt2ima
-    obj%p%c21 = momentum(vecPerm(1)) + cmpnnt2ima
+    cmpnnt2ima = mom(vecPerm(2))*imag
+    obj%p%c11 = mom(        0 ) + mom(vecPerm(3))
+    obj%p%c12 = mom(vecPerm(1)) - cmpnnt2ima
+    obj%p%c21 = mom(vecPerm(1)) + cmpnnt2ima
     call finish_p
+    obj%momentum(0:3)  = mom(0:3)
     obj%k = obj%p
     obj%kstr = 0
     obj%kapp = 0
@@ -219,6 +225,10 @@ contains
   obj%Rang%y2 = obj%p%c21*hh/obj%p%c11
   obj%angL%y1 =-obj%Rang%y2
   obj%angL%y2 = hh
+!  write(*,*) "sqrL:", obj%sqrL%x1, obj%sqrL%x2
+!  write(*,*) "Rsqr:", obj%Rsqr%x1, obj%Rsqr%x2
+!  write(*,*) "Rang:", obj%Rang%y1, obj%Rang%y2
+!  write(*,*) "angL:", obj%angL%y1, obj%angL%y2
   end subroutine
 
 
@@ -457,10 +467,41 @@ contains
 ! ask for integer arguments, 
 ! eg. l%ang(1,2)= l%p(1)%angL*l%p(2)%Rang etc.
 
+  subroutine list_set_dir( obj ,i3, i1 )
+  class(qomentum_list_type) :: obj
+  integer,intent(in) :: i1,i3
+  real(fltknd):: direction(0:3)
+!  write(*,*) "momentum:", obj%Q(i3)%momentum(0),  obj%Q(i3)%momentum(1),  obj%Q(i3)%momentum(2),  obj%Q(i3)%momentum(3)
+!  write(*,*) "set direction"
+  if (obj%Q(i1)%lightlike) then
+    direction(0:3) = obj%Q(i3)%momentum(0:3) -MZ*MZ/(2*mom_product(i1,i3))* obj%Q(i1)%momentum(0:3)
+  else
+    direction(0:3) = obj%Q(i3)%momentum(0:3) -MZ*MZ/(2*mom_product(i1,i3))*obj%Q(i1)%direction(0:3)
+  endif
+!  write(*,*) "new direction ", direction(0), direction(1), direction(2), direction(3)
+  call obj%Q(i3)%fill( obj%Q(i3)%momentum(0:3), direction(0:3))
+    contains
+
+    function mom_product(i1,i3) result(rslt)
+      integer,intent(in) :: i1,i3
+      complex(fltknd) :: rslt
+      if (obj%Q(i1)%lightlike) then
+        rslt= obj%Q(i3)%momentum(0)*obj%Q(i1)%momentum(0) - obj%Q(i3)%momentum(1)*obj%Q(i1)%momentum(1)&
+             -obj%Q(i3)%momentum(2)*obj%Q(i1)%momentum(2) - obj%Q(i3)%momentum(3)*obj%Q(i1)%momentum(3)
+      else
+        rslt= obj%Q(i3)%momentum(0)*obj%Q(i1)%direction(0) - obj%Q(i3)%momentum(1)*obj%Q(i1)%direction(1)&
+             -obj%Q(i3)%momentum(2)*obj%Q(i1)%direction(2) - obj%Q(i3)%momentum(3)*obj%Q(i1)%direction(3)
+      endif
+    end function
+  end subroutine
+
+
+
   function list_ang( obj ,i1,i2 ) result(rslt)
 ! <12>
   class(qomentum_list_type) :: obj
   integer,intent(in) :: i1,i2
+  integer :: i
   complex(fltknd) :: rslt
   rslt = obj%Q(i1)%angL*obj%Q(i2)%Rang
   end function

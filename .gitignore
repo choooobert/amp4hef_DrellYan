@@ -1,2 +1,4 @@
 build/*
 example/build/*
+example_cpp/build/*
+*_old

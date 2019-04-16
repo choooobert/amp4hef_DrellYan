@@ -45,9 +45,9 @@ program mainMC
     * 389379.66_fltknd &
 !   The phase space weight "psWeight" is missing the following factor,
 !   according to the RAMBO convention.
-    * (2*pi)**(4-3*Nfinst) &
+    * (2*pi)**(4-3*(Nfinst-1)) &
 !   Conversion factor from alphaStrong to g_QCD^2
-    * (4*pi)**Nfinst &
+    * (4*pi)**(Nfinst-1) &
 !   Average over initial-state spins. The weight factor "partonLumi" includes a
 !   factor 2 for each off-shell gluon to have a uniform definition of cnstWeight.
     / (2*2)
@@ -89,9 +89,12 @@ program mainMC
 !   average over initial-state colors, and the final-state symmetry factor.
     call put_momenta( id1 ,momenta ,directions )
     call matrix_element_b( id1 ,ampSquared )
+    write(*,*) "matrix element squared from data: ", instWeight
+    write(*,*) "matrix element calculated by me : ", ampSquared
+    write(*,*) "ratio :", instWeight/ampSquared
 !   Determine the total weight of the event.
     totalWeight = cnstWeight / flux * instWeight * psWeight * partonLumi &
-                * ampSquared * alphaStrong**Nfinst *alphaWeak
+                * ampSquared * alphaStrong**(Nfinst-1) *alphaWeak
 
 !   Gather statistics.
     sumW1 = sumW1 + totalWeight
@@ -127,9 +130,8 @@ program mainMC
     do ii=1,Nfinst
       read(eventUnit,*) momenta(0:3,ii+2) 
     enddo
-    read(eventUnit,*) instWeight,psWeight,partonLumi,alphaStrong
+    read(eventUnit,*) instWeight, partonLumi,alphaStrong, psWeight
     end subroutine
-  
     function momSquared( qq ) result(rslt)
     intent(in) :: qq
     real(fltknd) :: qq(0:3),rslt

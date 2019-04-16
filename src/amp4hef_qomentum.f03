@@ -11,7 +11,7 @@ module amp4hef_qomentum
   integer,parameter :: vecPerm(3)=[3,1,2]
   integer,parameter :: NsizeProc=12
   integer,parameter :: NsizeFlavor=3
-  real(fltknd), parameter:: MZ = 8315.287819239998
+  real(fltknd), parameter:: MZ = 91.1882
 
   complex(fltknd),save,protected :: imag
   logical,save :: initd=.false.

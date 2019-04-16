@@ -133,7 +133,7 @@ if(NZ.eq.1) then
 endif
 
 !
-  if (sum(process(1:Ntot)).ne.2) then
+  if (mod(sum(process(1:Ntot)), 2).ne.0) then
     write(*,*) 'ERROR in amp4hef: process not possible'
     stop
   endif

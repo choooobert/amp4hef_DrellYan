@@ -185,7 +185,7 @@ endif
   integer,intent(in) :: id
   real(fltknd),intent(in) :: momenta(0:3,*) ,directions(0:3,*)
   integer :: ii,Noff2
-  associate( Ntot=>glob(id)%Ntot ,Noff=>glob(id)%Noff )
+  associate( Ntot=>glob(id)%Ntot ,Noff=>glob(id)%Noff ,NZ=>glob(id)%NZ)
   Noff2 = Noff+1
   do ii=1,Noff
     call glob(id)%Q(ii)%fill( momenta(0:3,ii) ,directions(0:3,ii) )
@@ -193,13 +193,13 @@ endif
   do ii=Noff2,(Ntot-1)
     call glob(id)%Q(ii)%fill( momenta(0:3,ii) )
   enddo
-
-      call glob(id)%Q(Ntot)%fill( momenta(0:3,Ntot)  )
+    call glob(id)%Q(Ntot)%fill( momenta(0:3,Ntot)  )
   do ii=1,Noff
     glob(id)%Q(ii)%kstr = glob(id)%ang(ii,ii,Noff2)/glob(id)%sqr(ii,Noff2)
     glob(id)%Q(ii)%kapp = glob(id)%ang(Noff2,ii,ii)/glob(id)%ang(Noff2,ii)
   enddo
   end associate
+
   end subroutine
 
 

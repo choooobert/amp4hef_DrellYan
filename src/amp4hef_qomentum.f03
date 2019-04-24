@@ -11,7 +11,7 @@ module amp4hef_qomentum
   integer,parameter :: vecPerm(3)=[3,1,2]
   integer,parameter :: NsizeProc=12
   integer,parameter :: NsizeFlavor=3
-  real(fltknd), parameter:: MZ = 91.1882
+  real(fltknd), parameter:: MZ_sq = 8315.2878192399512
 
   complex(fltknd),save,protected :: imag
   logical,save :: initd=.false.
@@ -100,6 +100,7 @@ module amp4hef_qomentum
     procedure :: cterm=>list_cterm
     procedure :: dterm=>list_dterm
     procedure :: set_direction=>list_set_dir
+!    procedure :: s=>list_s
 
   end type
 
@@ -471,14 +472,15 @@ contains
   class(qomentum_list_type) :: obj
   integer,intent(in) :: i1,i3
   real(fltknd):: direction(0:3)
-!  write(*,*) "momentum:", obj%Q(i3)%momentum(0),  obj%Q(i3)%momentum(1),  obj%Q(i3)%momentum(2),  obj%Q(i3)%momentum(3)
+!  write(*,*) "momentum:", obj%Q(i3)%momentum(0)**2-obj%Q(i3)%momentum(1)**2&
+!                         -obj%Q(i3)%momentum(2)**2-obj%Q(i3)%momentum(3)**2
 !  write(*,*) "set direction"
   if (obj%Q(i1)%lightlike) then
-    direction(0:3) = obj%Q(i3)%momentum(0:3) -MZ*MZ/(2*mom_product(i1,i3))* obj%Q(i1)%momentum(0:3)
+    direction(0:3) = obj%Q(i3)%momentum(0:3) -MZ_sq/(2*mom_product(i1,i3))* obj%Q(i1)%momentum(0:3)
   else
-    direction(0:3) = obj%Q(i3)%momentum(0:3) -MZ*MZ/(2*mom_product(i1,i3))*obj%Q(i1)%direction(0:3)
+    direction(0:3) = obj%Q(i3)%momentum(0:3) -MZ_sq/(2*mom_product(i1,i3))*obj%Q(i1)%direction(0:3)
   endif
-!  write(*,*) "new direction ", direction(0), direction(1), direction(2), direction(3)
+!  write(*,*) "new direction ", direction(0)**2-direction(1)**2-direction(2)**2-direction(3)**2
   call obj%Q(i3)%fill( obj%Q(i3)%momentum(0:3), direction(0:3))
     contains
 
@@ -496,6 +498,20 @@ contains
   end subroutine
 
 
+!  function list_s(obj, i1, i3) result(rslt)
+!    integer,intent(in) :: i1,i3
+!    class(qomentum_list_type) :: obj
+!    complex(fltknd) :: rslt
+!    rslt = mom_product(i1,i1)+2*mom_product(i1,i3)+mom_product(i3,i3)
+!
+!  contains
+!  function mom_product(i1,i3) result (rslt)
+!    integer,intent(in) :: i1,i3
+!    complex(fltknd) :: rslt
+!    rslt= obj%Q(i3)%momentum(0)*obj%Q(i1)%momentum(0) - obj%Q(i3)%momentum(1)*obj%Q(i1)%momentum(1)&
+!         -obj%Q(i3)%momentum(2)*obj%Q(i1)%momentum(2) - obj%Q(i3)%momentum(3)*obj%Q(i1)%momentum(3)
+!    end function
+!end function
 
   function list_ang( obj ,i1,i2 ) result(rslt)
 ! <12>

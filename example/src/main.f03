@@ -3,7 +3,7 @@ program mainMC
   implicit none
   
   integer,parameter :: eventUnit=21
-  real(fltknd),parameter :: alphaWeak = 1./29.
+  real(fltknd),parameter :: alphaWeak = 0.042227735_fltknd
   real(fltknd),parameter :: pi=3.1415926535897932384626433832795_fltknd
   
   logical :: exitLoop
@@ -11,7 +11,7 @@ program mainMC
   integer :: id1,Nperm,NhelConf, NZ
   real(fltknd) :: Ecm,kTsq(2),sHat
   real(fltknd) :: momenta(0:3,8),directions(0:3,3),ampSquared
-  real(fltknd) :: eventWeight,instWeight,psWeight,cnstWeight,totalWeight
+  real(fltknd) :: eventWeight,matElem,psWeight,cnstWeight,totalWeight
   real(fltknd) :: partonLumi,alphaStrong,flux
   real(fltknd) :: sumW0,sumW1,sumW2
   character(72) :: eventFile,line
@@ -45,9 +45,9 @@ program mainMC
     * 389379.66_fltknd &
 !   The phase space weight "psWeight" is missing the following factor,
 !   according to the RAMBO convention.
-    * (2*pi)**(4-3*(Nfinst-1)) &
+    * (2*pi)**(4-3*(Nfinst)) &
 !   Conversion factor from alphaStrong to g_QCD^2
-    * (4*pi)**(Nfinst-1) &
+    * (4*pi)**(Nfinst) &
 !   Average over initial-state spins. The weight factor "partonLumi" includes a
 !   factor 2 for each off-shell gluon to have a uniform definition of cnstWeight.
     / (2*2)
@@ -89,13 +89,13 @@ program mainMC
 !   average over initial-state colors, and the final-state symmetry factor.
     call put_momenta( id1 ,momenta ,directions )
     call matrix_element_b( id1 ,ampSquared )
-    write(*,*) "matrix element squared from data: ", instWeight
+    write(*,*) "matrix element squared from data: ", matElem
     write(*,*) "matrix element calculated by me : ", ampSquared
-    write(*,*) "ratio :", instWeight/ampSquared
+    write(*,*) "ratio :", matElem/ampSquared
 !   Determine the total weight of the event.
-    totalWeight = cnstWeight / flux * instWeight * psWeight * partonLumi &
-                * ampSquared * alphaStrong**(Nfinst-1) *alphaWeak
-
+    !alphaStrong = 1.
+    totalWeight = cnstWeight / flux * partonLumi &
+                * ampSquared * alphaStrong**(Nfinst-NZ) *alphaWeak**(NZ)
 !   Gather statistics.
     sumW1 = sumW1 + totalWeight
     sumW2 = sumW2 + totalWeight**2
@@ -126,11 +126,11 @@ program mainMC
     read(eventUnit,*) eventWeight
     if (eventWeight.eq.0) return
     read(eventUnit,*) momenta(0:3,1) 
-    read(eventUnit,*) momenta(0:3,2) 
+    read(eventUnit,*) momenta(0:3,2)
     do ii=1,Nfinst
       read(eventUnit,*) momenta(0:3,ii+2) 
     enddo
-    read(eventUnit,*) instWeight, partonLumi,alphaStrong, psWeight
+    read(eventUnit,*) matElem, partonLumi,alphaStrong, psWeight
     end subroutine
     function momSquared( qq ) result(rslt)
     intent(in) :: qq

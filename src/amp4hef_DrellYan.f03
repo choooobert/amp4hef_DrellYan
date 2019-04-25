@@ -7,8 +7,8 @@ module amp4hef_DrellYan
   public :: fill_matrices_DrellYan,matrix_element_DrellYan ,amplitude_DrellYan ,all_amplitudes_DrellYan
 
   real, parameter :: sqrt_2 = 1.41421356237_fltknd
-  real, parameter :: MZ = 91.1882
-!  real, parameter :: MZ = 0
+!  real, parameter :: MZ = 91.1882
+  real, parameter :: MZ = 0
 
   real, parameter :: cV = 1._fltknd
   real, parameter :: cA = 1.26_fltknd
@@ -146,13 +146,13 @@ end function
     i1=1 ;i2=2 ;i3=4; i4=3
     !
     rslt = 0
-    call T%set_direction(i3,i4)
-    vv = (T%sqr(i4,i3)*T%ang(i3,i4)/MZ+MZ)*T%sqr(i4,i1)*T%ang(i2,i1)
-    yy = (MZ*MZ+T%ang(i4,i3,i4))*T%Q(i1)%kapp*T%Q(i1)%kstr
-    call T%set_direction(i3,i2)
-    xx = (T%sqr(i2,i3)*T%ang(i3,i2)/MZ+MZ)*T%sqr(i4,i1)*T%ang(i1,i2)
-    zz = (MZ*MZ+T%ang(i2,i3,i2))*T%Q(i1)%kapp*T%Q(i1)%kstr
-    rslt = sqrt_2*(vv/yy+xx/zz)
+!    call T%set_direction(i3,i4)
+!    vv = (T%sqr(i4,i3)*T%ang(i3,i4)/MZ+MZ)*T%sqr(i4,i1)*T%ang(i2,i1)
+!    yy = (MZ*MZ+T%ang(i4,i3,i4))*T%Q(i1)%kapp*T%Q(i1)%kstr
+!    call T%set_direction(i3,i2)
+!    xx = (T%sqr(i2,i3)*T%ang(i3,i2)/MZ+MZ)*T%sqr(i4,i1)*T%ang(i1,i2)
+!    zz = (MZ*MZ+T%ang(i2,i3,i2))*T%Q(i1)%kapp*T%Q(i1)%kstr
+!    rslt = sqrt_2*(vv/yy+xx/zz)
     end function
 
 

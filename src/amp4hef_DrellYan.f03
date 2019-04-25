@@ -8,6 +8,8 @@ module amp4hef_DrellYan
 
   real, parameter :: sqrt_2 = 1.41421356237_fltknd
   real, parameter :: MZ = 91.1882
+!  real, parameter :: MZ = 0
+
   real, parameter :: cV = 1._fltknd
   real, parameter :: cA = 1.26_fltknd
 
@@ -39,8 +41,10 @@ contains
 	do ii=1, (NhelConf/2)
 		do jj=1, Nperm
       amp(ii, jj) = amplitude_DrellYan(Tin ,helTable_DrellYan(:,ii), perTable(1:NPerm,jj))
-      amp(NhelConf-ii+1,jj) =conjg(amp(ii,jj))
-      rslt =amp(ii, jj)*conjg(amp(ii,jj))+ amp(NhelConf-ii+1,jj)*conjg(amp(NhelConf-ii+1,jj))
+      amp(NhelConf-ii+1,jj) =(cV+cA)*conjg(amp(ii,jj))
+      amp(ii, jj) =(cV-cA)*amp(ii, jj)
+      rslt =16*amp(ii, jj)*conjg(amp(ii,jj)) + 16*amp(NhelConf-ii+1,jj)*conjg(amp(NhelConf-ii+1,jj))
+!      rslt=Tin%Q(1)%kapp*Tin%Q(1)%kstr*rslt
 !      write(*,'(2e16.8,99i3)') amp(ii),helTable_DrellYan(1:NhelSum,ii) !DEBUG
     enddo
 !    write(*,*) !DEBUG
@@ -105,19 +109,70 @@ contains
 	end if
     else if(Ntot.eq.4) then
         if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.-1) then
-        rslt = 16*amp_101(Tin)
-        write(*,*) "I'm in correct place to be"
+        rslt = amp_101(Tin)
         else if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.0) then
-        rslt = 16*amp_102(Tin)
-        write(*,*) "I'm in correct place to be"
+        rslt = amp_102(Tin)
         else if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.1) then
-        rslt = 16*amp_103(Tin)
-        write(*,*) "I'm in correct place to be"
+        rslt = amp_103(Tin)
         end if
     end if
 
   end associate
 end function
+
+!amplitudes for 1-jet process
+    function amp_101(T) result(rslt)
+    type(qomentum_list_type),intent(in) :: T
+    complex(fltknd) :: rslt,vv ,xx,yy, zz
+    integer :: i1, i2, i3, i4
+    !
+    i1=1 ;i2=2 ;i3=4; i4=3
+    !
+    rslt = 0
+    call T%set_direction(i3,i1)
+    vv = T%sqr(i4,i1)*T%sqr(i4,i1)*T%ang(i3,i4)*T%ang(i1,i2)/T%sqr(i1,i3)
+    yy = (MZ*MZ+T%ang(i4,i3,i4))*T%Q(i1)%kapp*T%Q(i1)%kstr
+    call T%set_direction(i3,i2)
+    xx = T%sqr(i4,i1)*T%ang(i1,i3)*T%ang(i3,i2)
+    zz = (MZ*MZ+T%ang(i2,i3,i2))*T%Q(i1)%kapp*T%Q(i1)%kstr
+    rslt = 2*(vv/yy+xx/zz)
+    end function
+
+    function amp_102(T) result(rslt)
+    type(qomentum_list_type),intent(in) :: T
+    complex(fltknd) :: rslt,vv ,xx,yy, zz
+    integer :: i1, i2, i3, i4
+    !
+    i1=1 ;i2=2 ;i3=4; i4=3
+    !
+    rslt = 0
+    call T%set_direction(i3,i4)
+    vv = (T%sqr(i4,i3)*T%ang(i3,i4)/MZ+MZ)*T%sqr(i4,i1)*T%ang(i2,i1)
+    yy = (MZ*MZ+T%ang(i4,i3,i4))*T%Q(i1)%kapp*T%Q(i1)%kstr
+    call T%set_direction(i3,i2)
+    xx = (T%sqr(i2,i3)*T%ang(i3,i2)/MZ+MZ)*T%sqr(i4,i1)*T%ang(i1,i2)
+    zz = (MZ*MZ+T%ang(i2,i3,i2))*T%Q(i1)%kapp*T%Q(i1)%kstr
+    rslt = sqrt_2*(vv/yy+xx/zz)
+    end function
+
+
+    function amp_103(T) result(rslt)
+    type(qomentum_list_type),intent(in) :: T
+    complex(fltknd) :: rslt,vv ,xx,yy, zz
+    integer :: i1, i2, i3, i4
+    !
+    i1=1 ;i2=2 ;i3=4; i4=3
+    !
+    rslt = 0
+    call T%set_direction(i3,i4)
+    vv = T%sqr(i4,i3)*T%ang(i3,i1)*T%ang(i1,i2)
+    yy = (MZ*MZ+T%ang(i4,i3,i4))*T%Q(i1)%kapp*T%Q(i1)%kstr
+    call T%set_direction(i3,i1)
+    xx = T%sqr(i1,i4)*T%ang(i1,i2)*T%ang(i1,i2)*T%sqr(i2,i3)/T%ang(i2,i3)
+    zz = (MZ*MZ+T%ang(i2,i3,i2))*T%Q(i1)%kapp*T%Q(i1)%kstr
+    rslt = 2*(vv/yy+xx/zz)
+    end function
+
 
 !!!! amplitude case part,++ not relevant now
 
@@ -800,57 +855,7 @@ end function
     end function
 
 
-    function amp_101(T) result(rslt)
-    type(qomentum_list_type),intent(in) :: T
-    complex(fltknd) :: rslt,vv ,xx,yy, zz
-    integer :: i1, i2, i3, i4
-    !
-    i1=1 ;i2=2 ;i3=4; i4=3
-    !
-    rslt = 0
-    call T%set_direction(i3,i1)
-    vv = T%sqr(i4,i1)*T%sqr(i4,i1)*T%ang(i3,i4)*T%ang(i1,i2)/T%sqr(i1,i3)
-    yy = (MZ*MZ+T%ang(i4,i3,i4))*T%Q(i1)%kapp*T%Q(i1)%kstr
-    call T%set_direction(i3,i2)
-    xx = T%sqr(i4,i1)*T%ang(i1,i3)*T%ang(i3,i2)
-    zz = (MZ*MZ+T%ang(i3,i3,i3))*T%Q(i1)%kapp*T%Q(i1)%kstr
-    rslt = 2*(-vv/yy+xx/zz)
-    end function
 
-    function amp_102(T) result(rslt)
-    type(qomentum_list_type),intent(in) :: T
-    complex(fltknd) :: rslt,vv ,xx,yy, zz
-    integer :: i1, i2, i3, i4
-    !
-    i1=1 ;i2=2 ;i3=4; i4=3
-    !
-    rslt = 0
-    call T%set_direction(i3,i4)
-    vv = (T%sqr(i4,i3)*T%ang(i3,i4)/MZ+MZ)*T%sqr(i4,i1)*T%ang(i1,i2)
-    yy = (MZ*MZ+T%ang(i4,i3,i4))*T%Q(i1)%kapp*T%Q(i1)%kstr
-    call T%set_direction(i3,i2)
-    xx = (T%sqr(i2,i3)*T%ang(i3,i2)/MZ+MZ)*T%sqr(i4,i1)*T%ang(i1,i2)
-    zz = (MZ*MZ+T%ang(i2,i3,i2))*T%Q(i1)%kapp*T%Q(i1)%kstr
-    rslt = sqrt_2*(vv/yy-xx/zz)
-    end function
-
-
-    function amp_103(T) result(rslt)
-    type(qomentum_list_type),intent(in) :: T
-    complex(fltknd) :: rslt,vv ,xx,yy, zz
-    integer :: i1, i2, i3, i4
-    !
-    i1=1 ;i2=2 ;i3=4; i4=3
-    !
-    rslt = 0
-    call T%set_direction(i3,i4)
-    vv = T%sqr(i4,i3)*T%sqr(i3,i1)*T%ang(i1,i2)
-    yy = (MZ*MZ+T%ang(i4,i3,i4))*T%Q(i1)%kapp*T%Q(i1)%kstr
-    call T%set_direction(i3,i1)
-    xx = T%sqr(i4,i1)*T%ang(i1,i2)*T%ang(i1,i2)*T%sqr(i2,i3)/T%ang(i1,i3)
-    zz = (MZ*MZ+T%ang(i2,i3,i2))*T%Q(i1)%kapp*T%Q(i1)%kstr
-    rslt = 2*(-vv/yy+xx/zz)
-    end function
 
   subroutine fill_matrices_DrellYan
   integer :: rUnit

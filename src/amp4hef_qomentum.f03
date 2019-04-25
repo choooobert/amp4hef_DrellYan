@@ -12,6 +12,7 @@ module amp4hef_qomentum
   integer,parameter :: NsizeProc=12
   integer,parameter :: NsizeFlavor=3
   real(fltknd), parameter:: MZ_sq = 8315.2878192399512
+!  real(fltknd), parameter:: MZ_sq = 0
 
   complex(fltknd),save,protected :: imag
   logical,save :: initd=.false.

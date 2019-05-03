@@ -103,7 +103,6 @@ contains
   Nflavor = 0
   NflavorFinst = 0
 
-	! co te petle robia, przeanalizuj
   do ii=1,Ntot
     ! checks if the particle has a correct color index
     if (process(ii).lt.-NsizeFlavor.or.NsizeFlavor.lt.process(ii)) then

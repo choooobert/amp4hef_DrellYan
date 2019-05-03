@@ -41,10 +41,10 @@ contains
 	do ii=1, (NhelConf/2)
 		do jj=1, Nperm
       amp(ii, jj) = amplitude_DrellYan(Tin ,helTable_DrellYan(:,ii), perTable(1:NPerm,jj))
-      amp(NhelConf-ii+1,jj) =conjg(amp(ii,jj))
-      amp(ii, jj) =amp(ii, jj)
-      rslt =16*amp(ii, jj)*conjg(amp(ii,jj)) + 16*amp(NhelConf-ii+1,jj)*conjg(amp(NhelConf-ii+1,jj))
-      rslt=rslt*(Tin%Q(1)%kapp*Tin%Q(1)%kstr)
+      amp(NhelConf-ii+1,jj) = (cV+cA)*conjg(amp(ii,jj))
+      amp(ii, jj) = (cV-cA)*amp(ii, jj)
+      rslt =amp(ii, jj)*conjg(amp(ii,jj)) + amp(NhelConf-ii+1,jj)*conjg(amp(NhelConf-ii+1,jj))
+      rslt=16*rslt*(Tin%Q(1)%kapp*Tin%Q(1)%kstr)
 !      write(*,'(2e16.8,99i3)') amp(ii),helTable_DrellYan(1:NhelSum,ii) !DEBUG
     enddo
 !    write(*,*) !DEBUG
@@ -112,10 +112,52 @@ contains
         else if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.1) then
         rslt = amp_103(Tin)
         end if
+    else if(Ntot.eq.3) then
+      if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.-1) then
+      rslt = amp_001(Tin)
+      else if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.0) then
+      rslt = amp_002(Tin)
+      else if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.1) then
+      rslt = amp_003(Tin)
+      end if
     end if
 
   end associate
 end function
+
+
+!! !amplitudes for 0-jet process
+    function amp_001(T) result(rslt)
+    type(qomentum_list_type),intent(in) :: T
+    complex(fltknd) :: rslt
+    integer :: i1, i2, i3
+    !
+    i1=1 ;i2=2 ;i3=3;
+    !
+    rslt = sqrt_2*T%ang(i1,i3)*T%sqr(i2,i1)/T%sqr(i3,i1)
+    end function
+
+    function amp_002(T) result(rslt)
+    type(qomentum_list_type),intent(in) :: T
+    complex(fltknd) :: rslt
+    integer :: i1, i2, i3
+    !
+    i1=1 ;i2=2 ;i3=3;
+    !
+    rslt = T%ang(i1,i3)*T%sqr(i2,i3)/MZ
+    end function
+
+
+    function amp_003(T) result(rslt)
+    type(qomentum_list_type),intent(in) :: T
+    complex(fltknd) :: rslt
+    integer :: i1, i2, i3
+    !
+    i1=1 ;i2=2 ;i3=3;
+    !
+    rslt = sqrt_2*T%ang(i1,i2)*T%sqr(i3,i2)/T%ang(i1,i3)
+    end function
+
 
 !! !amplitudes for 1-jet process
     function amp_101(T) result(rslt)

@@ -44,12 +44,12 @@ contains
       amp(NhelConf-ii+1,jj) = (cV+cA)*conjg(amp(ii,jj))
       amp(ii, jj) = (cV-cA)*amp(ii, jj)
       rslt =amp(ii, jj)*conjg(amp(ii,jj)) + amp(NhelConf-ii+1,jj)*conjg(amp(NhelConf-ii+1,jj))
-      rslt=16*rslt*(Tin%Q(1)%kapp*Tin%Q(1)%kstr)
+      rslt=16*16*rslt*(Tin%Q(1)%kapp*Tin%Q(1)%kstr)
 !      write(*,'(2e16.8,99i3)') amp(ii),helTable_DrellYan(1:NhelSum,ii) !DEBUG
     enddo
 !    write(*,*) !DEBUG
   enddo
-  rslt = rslt
+  rslt = 100*rslt
   end associate
   end function 
 

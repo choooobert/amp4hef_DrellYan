@@ -38,18 +38,20 @@ contains
         NPerm = 1
     end if
   rslt = 0
-	do ii=1, (NhelConf/2)
-		do jj=1, Nperm
+    do ii=1, (NhelConf/2)
+        do jj=1, Nperm
       amp(ii, jj) = amplitude_DrellYan(Tin ,helTable_DrellYan(:,ii), perTable(1:NPerm,jj))
-      amp(NhelConf-ii+1,jj) = (cV+cA)*conjg(amp(ii,jj))
-      amp(ii, jj) = (cV-cA)*amp(ii, jj)
-      rslt =amp(ii, jj)*conjg(amp(ii,jj)) + amp(NhelConf-ii+1,jj)*conjg(amp(NhelConf-ii+1,jj))
-      rslt=16*16*rslt*(Tin%Q(1)%kapp*Tin%Q(1)%kstr)
+      rslt = rslt + amp(ii, jj)*conjg(amp(ii,jj))
 !      write(*,'(2e16.8,99i3)') amp(ii),helTable_DrellYan(1:NhelSum,ii) !DEBUG
     enddo
 !    write(*,*) !DEBUG
   enddo
-  rslt = 100*rslt
+
+  rslt = 2*rslt*(Tin%Q(1)%kapp*Tin%Q(1)%kstr)
+  !strong factor
+  rslt = 16*rslt
+  !weak factor
+  rslt = 2*(cV*cV+cA*cA)*rslt
   end associate
   end function 
 
@@ -106,10 +108,16 @@ contains
 !	end if
     else if(Ntot.eq.4) then
         if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.-1) then
+!        write(*,*) "helicity", helicity(i2), helicity(i4), helicity(i3)
+!        write(*,*)  "amp 101"
         rslt = amp_101(Tin)
         else if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.0) then
+!        write(*,*) "helicity", helicity(i2), helicity(i4), helicity(i3)
+!        write(*,*)  "amp 102"
         rslt = amp_102(Tin)
         else if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.1) then
+!        write(*,*) "helicity", helicity(i2), helicity(i4), helicity(i3)
+!        write(*,*)  "amp 103"
         rslt = amp_103(Tin)
         end if
     else if(Ntot.eq.3) then

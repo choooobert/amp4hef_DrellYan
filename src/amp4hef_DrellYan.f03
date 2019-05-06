@@ -38,18 +38,22 @@ contains
         NPerm = 1
     end if
   rslt = 0
-	do ii=1, (NhelConf/2)
-		do jj=1, Nperm
+    do ii=1, (NhelConf/2)
+        do jj=1, Nperm
       amp(ii, jj) = amplitude_DrellYan(Tin ,helTable_DrellYan(:,ii), perTable(1:NPerm,jj))
-      amp(NhelConf-ii+1,jj) = (cV+cA)*conjg(amp(ii,jj))
-      amp(ii, jj) = (cV-cA)*amp(ii, jj)
-      rslt =amp(ii, jj)*conjg(amp(ii,jj)) + amp(NhelConf-ii+1,jj)*conjg(amp(NhelConf-ii+1,jj))
-      rslt=16*16*rslt*(Tin%Q(1)%kapp*Tin%Q(1)%kstr)
+      rslt = rslt + amp(ii, jj)*conjg(amp(ii,jj))
 !      write(*,'(2e16.8,99i3)') amp(ii),helTable_DrellYan(1:NhelSum,ii) !DEBUG
     enddo
 !    write(*,*) !DEBUG
   enddo
-  rslt = 100*rslt
+  do ii=1, Noff
+      rslt = rslt*(Tin%Q(ii)%kapp*Tin%Q(ii)%kstr)
+  enddo
+  rslt= 2*rslt
+  !strong factor
+  rslt = 16*rslt
+  !weak factor
+  rslt = 2*(cV*cV+cA*cA)*rslt
   end associate
   end function 
 
@@ -106,57 +110,22 @@ contains
 !	end if
     else if(Ntot.eq.4) then
         if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.-1) then
+!        write(*,*) "helicity", helicity(i2), helicity(i4), helicity(i3)
+!        write(*,*)  "amp 101"
         rslt = amp_101(Tin)
         else if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.0) then
+!        write(*,*) "helicity", helicity(i2), helicity(i4), helicity(i3)
+!        write(*,*)  "amp 102"
         rslt = amp_102(Tin)
         else if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.1) then
+!        write(*,*) "helicity", helicity(i2), helicity(i4), helicity(i3)
+!        write(*,*)  "amp 103"
         rslt = amp_103(Tin)
         end if
-    else if(Ntot.eq.3) then
-      if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.-1) then
-      rslt = amp_001(Tin)
-      else if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.0) then
-      rslt = amp_002(Tin)
-      else if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.1) then
-      rslt = amp_003(Tin)
-      end if
     end if
 
   end associate
 end function
-
-
-!! !amplitudes for 0-jet process
-    function amp_001(T) result(rslt)
-    type(qomentum_list_type),intent(in) :: T
-    complex(fltknd) :: rslt
-    integer :: i1, i2, i3
-    !
-    i1=1 ;i2=2 ;i3=3;
-    !
-    rslt = sqrt_2*T%ang(i1,i3)*T%sqr(i2,i1)/T%sqr(i3,i1)
-    end function
-
-    function amp_002(T) result(rslt)
-    type(qomentum_list_type),intent(in) :: T
-    complex(fltknd) :: rslt
-    integer :: i1, i2, i3
-    !
-    i1=1 ;i2=2 ;i3=3;
-    !
-    rslt = T%ang(i1,i3)*T%sqr(i2,i3)/MZ
-    end function
-
-
-    function amp_003(T) result(rslt)
-    type(qomentum_list_type),intent(in) :: T
-    complex(fltknd) :: rslt
-    integer :: i1, i2, i3
-    !
-    i1=1 ;i2=2 ;i3=3;
-    !
-    rslt = sqrt_2*T%ang(i1,i2)*T%sqr(i3,i2)/T%ang(i1,i3)
-    end function
 
 
 !! !amplitudes for 1-jet process
@@ -176,17 +145,18 @@ end function
 
     function amp_102(T) result(rslt)
     type(qomentum_list_type),intent(in) :: T
-    complex(fltknd) :: rslt,vv ,xx,yy, zz
+    complex(fltknd) :: rslt, vv ,xx,yy, zz
     integer :: i1, i2, i3, i4
     !
     i1=1 ;i2=2 ;i3=4; i4=3
     !
     rslt = 0
     call T%set_direction(i3,i1)
-    xx = (T%sqr(i4,i3)*T%ang(i3,i4)/MZ+MZ*T%ang(i1,i2)*T%sqr(i2,i1)/(T%ang(i3,i1)*T%sqr(i1,i3)))/(MZ*MZ+T%ang(i4,i3,i4))
-    yy = (T%sqr(i2,i3)*T%ang(i3,i2)/MZ+MZ*T%ang(i1,i4)*T%sqr(i4,i1)/(T%ang(i3,i1)*T%sqr(i1,i3)))/(MZ*MZ+T%ang(i2,i3,i2))
+    vv = MZ/(T%ang(i3,i1)*T%sqr(i1,i3))
+    xx = (T%sqr(i4,i3)*T%ang(i3,i4)/MZ + vv*T%ang(i1,i2)*T%sqr(i2,i1))/(MZ*MZ+T%ang(i4,i3,i4))
+    yy = (T%sqr(i2,i3)*T%ang(i3,i2)/MZ + vv*T%ang(i1,i4)*T%sqr(i4,i1))/(MZ*MZ+T%ang(i2,i3,i2))
     zz = T%sqr(i4,i1)*T%ang(i1,i2)/(T%Q(i1)%kapp*T%Q(i1)%kstr)
-    rslt = sqrt_2*(-xx+yy)/zz
+    rslt = sqrt_2*zz*(-xx+yy)
     end function
 
 

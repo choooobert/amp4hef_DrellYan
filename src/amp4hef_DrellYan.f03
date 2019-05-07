@@ -138,28 +138,37 @@ end function
     i1=1 ;i2=2 ;i3=4; i4=3
     !
     rslt = 0
-!    write(*,*) "101"
     call T%set_direction(i3,i4)
     vv =T%sqr(i4,i1)*T%sqr(i4,i1)*T%ang(i3,i2)
-    yy = (MZ_sq + T%ang(i2,i3,i2))*T%Q(i1)%kapp*T%sqr(i4,i3)
+    yy = (MZ_sq+T%ang(i2,i3,i2))*T%Q(i1)%kapp*T%sqr(i4,i3)
     rslt = 2*vv/yy
     end function
 
     function amp_102(T) result(rslt)
     type(qomentum_list_type),intent(in) :: T
-    complex(fltknd) :: rslt, vv ,xx,yy, zz
+    complex(fltknd) :: rslt, vv ,xx,yy, zz, uu, ww
     integer :: i1, i2, i3, i4
     !
     i1=1 ;i2=2 ;i3=4; i4=3
     !
     rslt = 0
 !    write(*,*) "102"
-    call T%set_direction(i3,i1)
-    vv = MZ/(T%ang(i3,i1)*T%sqr(i1,i3))
-    xx = (T%sqr(i4,i3)*T%ang(i3,i4)/MZ + vv*T%ang(i1,i2)*T%sqr(i2,i1))/(MZ_sq+T%ang(i4,i3,i4))
-    yy = (T%sqr(i2,i3)*T%ang(i3,i2)/MZ + vv*T%ang(i1,i4)*T%sqr(i4,i1))/(MZ_sq+T%ang(i2,i3,i2))
-    zz = T%sqr(i4,i1)*T%ang(i1,i2)/(T%Q(i1)%kapp*T%Q(i1)%kstr)
-    rslt = sqrt_2*zz*(-xx+yy)
+!    call T%set_direction(i3,i1)
+!    vv = MZ/(T%ang(i3,i1)*T%sqr(i1,i3))
+!    xx = (T%sqr(i4,i3)*T%ang(i3,i4)/MZ + vv*T%ang(i1,i2)*T%sqr(i2,i1))/(MZ_sq+T%ang(i4,i3,i4))
+!    yy = (T%sqr(i2,i3)*T%ang(i3,i2)/MZ + vv*T%ang(i1,i4)*T%sqr(i4,i1))/(MZ_sq+T%ang(i2,i3,i2))
+!    zz = T%sqr(i4,i1)*T%ang(i1,i2)/(T%Q(i1)%kapp*T%Q(i1)%kstr)
+!    rslt = sqrt_2*zz*(-xx+yy)
+
+
+    call T%set_direction(i3,i2)
+    uu = T%sqr(i4,i2)*T%ang(i2,i1)*T%ang(i2,i1)/(T%ang(i3,i2)*T%sqr(i2,i3))
+    ww = 1/(MZ*T%Q(i1)%kapp*T%Q(i1)%kstr)
+    xx = T%sqr(i4,i3)*T%ang(i1,i2)*(T%ang(i3,i1)*T%Q(i1)%kapp+T%ang(i3,i2)*T%sqr(i2,i1)) &
+       /(MZ_sq+T%ang(i4,i3,i4))
+    yy = T%sqr(i4,i1)*T%ang(i3,i2)*(T%sqr(i1,i3)*T%Q(i1)%kstr+T%ang(i1,i4)*T%sqr(i4,i3)) &
+       /(MZ_sq+T%ang(i2,i3,i2))
+    rslt = sqrt_2*(ww*uu+ww*(xx-yy))
     end function
 
 
@@ -171,7 +180,6 @@ end function
     i1=1 ;i2=2 ;i3=4; i4=3
     !
     rslt = 0
-!    write(*,*) "103"
     call T%set_direction(i3,i2)
     vv =T%ang(i2,i1)*T%ang(i2,i1)*T%sqr(i3,i4)
     yy = (MZ_sq+T%ang(i4,i3,i4))*T%Q(i1)%kstr*T%ang(i2,i3)

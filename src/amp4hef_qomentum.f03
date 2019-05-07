@@ -174,6 +174,7 @@ contains
   real(fltknd),intent(in) :: mom(0:3),dir(0:3)
   optional :: dir
   complex(fltknd) :: cmpnnt2ima
+  obj%momentum(0:3)  = mom(0:3)
   if (present(dir)) then
     obj%direction(0:3) = dir(0:3)
     obj%lightlike = .false.
@@ -194,7 +195,6 @@ contains
     obj%p%c12 = mom(vecPerm(1)) - cmpnnt2ima
     obj%p%c21 = mom(vecPerm(1)) + cmpnnt2ima
     call finish_p
-    obj%momentum(0:3)  = mom(0:3)
     obj%k = obj%p
     obj%kstr = 0
     obj%kapp = 0
@@ -473,27 +473,26 @@ contains
   class(qomentum_list_type) :: obj
   integer,intent(in) :: i1,i3
   real(fltknd):: direction(0:3)
-!  write(*,*) "momentum:", obj%Q(i3)%momentum(0)**2-obj%Q(i3)%momentum(1)**2&
-!                         -obj%Q(i3)%momentum(2)**2-obj%Q(i3)%momentum(3)**2
+!  write(*,*) "momentum:", obj%Q(i3)%momentum(0)**2 - obj%Q(i3)%momentum(1)**2 - &
+!                          obj%Q(i3)%momentum(2)**2 - obj%Q(i3)%momentum(3)**2
 !  write(*,*) "set direction"
   if (obj%Q(i1)%lightlike) then
     direction(0:3) = obj%Q(i3)%momentum(0:3) -MZ_sq/(2*mom_product(i1,i3))* obj%Q(i1)%momentum(0:3)
   else
     direction(0:3) = obj%Q(i3)%momentum(0:3) -MZ_sq/(2*mom_product(i1,i3))*obj%Q(i1)%direction(0:3)
   endif
-!  write(*,*) "new direction ", direction(0)**2-direction(1)**2-direction(2)**2-direction(3)**2
   call obj%Q(i3)%fill( obj%Q(i3)%momentum(0:3), direction(0:3))
-    contains
 
+  contains
     function mom_product(i1,i3) result(rslt)
       integer,intent(in) :: i1,i3
       complex(fltknd) :: rslt
       if (obj%Q(i1)%lightlike) then
         rslt= obj%Q(i3)%momentum(0)*obj%Q(i1)%momentum(0) - obj%Q(i3)%momentum(1)*obj%Q(i1)%momentum(1)&
-             -obj%Q(i3)%momentum(2)*obj%Q(i1)%momentum(2) - obj%Q(i3)%momentum(3)*obj%Q(i1)%momentum(3)
+            - obj%Q(i3)%momentum(2)*obj%Q(i1)%momentum(2) - obj%Q(i3)%momentum(3)*obj%Q(i1)%momentum(3)
       else
         rslt= obj%Q(i3)%momentum(0)*obj%Q(i1)%direction(0) - obj%Q(i3)%momentum(1)*obj%Q(i1)%direction(1)&
-             -obj%Q(i3)%momentum(2)*obj%Q(i1)%direction(2) - obj%Q(i3)%momentum(3)*obj%Q(i1)%direction(3)
+            - obj%Q(i3)%momentum(2)*obj%Q(i1)%direction(2) - obj%Q(i3)%momentum(3)*obj%Q(i1)%direction(3)
       endif
     end function
   end subroutine

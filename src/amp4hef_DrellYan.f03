@@ -138,10 +138,9 @@ end function
     i1=1 ;i2=2 ;i3=4; i4=3
     !
     rslt = 0
-!    write(*,*) "101"
     call T%set_direction(i3,i4)
     vv =T%sqr(i4,i1)*T%sqr(i4,i1)*T%ang(i3,i2)
-    yy = (MZ_sq + T%ang(i2,i3,i2))*T%Q(i1)%kapp*T%sqr(i4,i3)
+    yy = (MZ_sq+T%ang(i2,i3,i2))*T%Q(i1)%kapp*T%sqr(i4,i3)
     rslt = 2*vv/yy
     end function
 
@@ -171,7 +170,6 @@ end function
     i1=1 ;i2=2 ;i3=4; i4=3
     !
     rslt = 0
-!    write(*,*) "103"
     call T%set_direction(i3,i2)
     vv =T%ang(i2,i1)*T%ang(i2,i1)*T%sqr(i3,i4)
     yy = (MZ_sq+T%ang(i4,i3,i4))*T%Q(i1)%kstr*T%ang(i2,i3)

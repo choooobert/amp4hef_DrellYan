@@ -10,7 +10,7 @@ program mainMC
   integer :: Noffshell,Nfinst,Ntotal,ii,process(13)
   integer :: id1,Nperm,NhelConf, NZ
   real(fltknd) :: Ecm,kTsq(2),sHat
-  real(fltknd) :: momenta(0:3,8),directions(0:3,3),ampSquared
+  real(fltknd) :: momenta(0:3,8),directions(0:3,5),ampSquared
   real(fltknd) :: eventWeight,matElem,psWeight,cnstWeight,totalWeight
   real(fltknd) :: partonLumi,alphaStrong,flux
   real(fltknd) :: sumW0,sumW1,sumW2
@@ -85,12 +85,17 @@ program mainMC
     directions(2,1:2) = 0
     directions(3,1:2) = momenta(3,1:2)
 
+    directions(0,Ntotal) = 1
+    directions(1,Ntotal) = 0
+    directions(2,Ntotal) = 0
+    directions(3,Ntotal) = 1
+
 !   Evaluate the matrix element. Call matrix_element_b which includes factors to
 !   average over initial-state colors, and the final-state symmetry factor.
     call put_momenta( id1 ,momenta ,directions )
     call matrix_element_b( id1 ,ampSquared )
-    write(*,*) "matrix element squared from data: ", matElem
-    write(*,*) "matrix element calculated by me : ", ampSquared
+!    write(*,*) "matrix element squared from data: ", matElem
+!    write(*,*) "matrix element calculated by me : ", ampSquared
     write(*,*) "ratio :", matElem/ampSquared
 !   Determine the total weight of the event.
     !alphaStrong = 1.

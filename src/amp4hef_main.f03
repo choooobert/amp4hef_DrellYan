@@ -233,21 +233,21 @@ endif
   end subroutine
 
 
-  subroutine amplitude( id ,rslt ,helicity ,perm )
+  subroutine amplitude( id ,rslt ,helicity ,perm, type )
 ! Helicities should follow the process as given to put_process,
 ! so for example helicities refering to off-shell gluons are ignored.
-  integer,intent(in) :: id ,helicity(:) ,perm(:)
+  integer,intent(in) :: id ,helicity(:) ,perm(:), type
   complex(fltknd),intent(out) :: rslt
   associate( o=>glob(id) )
-  rslt = o%amplitude( helicity(o%helOrder(1:o%NhelOrder)) ,perm )
+  rslt = o%amplitude( helicity(o%helOrder(1:o%NhelOrder)) ,perm, type )
   end associate
   end subroutine
 
-  subroutine amplitude_cpp( id ,rslt ,helicity ,perm )
-  integer,intent(in) :: id ,helicity(NsizeProc) ,perm(NsizeProc)
+  subroutine amplitude_cpp( id ,rslt ,helicity ,perm, type )
+  integer,intent(in) :: id ,helicity(NsizeProc) ,perm(NsizeProc), type
   complex(fltknd),intent(out) :: rslt
   associate( o=>glob(id) )
-  rslt = o%amplitude( helicity(o%helOrder(1:o%NhelOrder)) ,perm )
+  rslt = o%amplitude( helicity(o%helOrder(1:o%NhelOrder)) ,perm, type )
   end associate
   end subroutine
 

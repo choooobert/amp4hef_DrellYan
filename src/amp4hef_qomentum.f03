@@ -146,10 +146,10 @@ module amp4hef_qomentum
   end interface
 
   abstract interface
-    function amp_interface( obj ,helicity ,perm ) result(rslt)
+    function amp_interface( obj ,helicity ,perm, type ) result(rslt)
     import
     class(qomentum_list_type),intent(in) :: obj
-    integer,intent(in) :: helicity(:),perm(:)
+    integer,intent(in) :: helicity(:),perm(:), type
     complex(fltknd) :: rslt
     end function
   end interface 

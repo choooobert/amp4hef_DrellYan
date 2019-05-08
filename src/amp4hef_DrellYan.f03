@@ -54,7 +54,7 @@ contains
   !strong factor
   rslt = 8*rslt
   !weak factor
-  rslt = 2*(cV*cV+cA*cA)*rslt
+  rslt = 2*(cV*cV+cA*cA-2*cV*cA)*rslt
   end associate
   end function 
 
@@ -93,35 +93,16 @@ contains
 	!
 	rslt = 0
 	i2=1 ;i3=3; i4=2 !indexing only for helicity configuration not for qomentum class
-    if(Ntot.eq.5) then
-!	if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.-1) then
-!	rslt =  amp_01(Tin, perm) + amp_07(Tin, perm) &
-!	       + amp_19(Tin, perm) + amp_25(Tin, perm) &
-!	       + amp_37(Tin, perm))
-!
-!	else if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.0) then
-!	rslt = ( amp_02(Tin, perm) + amp_08(Tin, perm) + amp_14(Tin, perm) &
-!		      + amp_20(Tin, perm) + amp_26(Tin, perm) + amp_32(Tin, perm) &
-!		      + amp_38(Tin, perm) + amp_44(Tin, perm))
-!
-!	else if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.1) then
-!	rslt = ( amp_03(Tin, perm) + amp_15(Tin, perm) &
-!	       + amp_21(Tin, perm) + amp_33(Tin, perm) &
-!	       + amp_45(Tin, perm))
-!	end if
-    else if(Ntot.eq.4) then
+ if(Ntot.eq.4) then
         if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.-1) then
-!        write(*,*) "helicity", helicity(i2), helicity(i4), helicity(i3)
-!        write(*,*)  "amp 101"
-        rslt = amp_101(Tin)
+!        rslt = amp_101(Tin)
+!        rslt = 0
         else if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.0) then
-!        write(*,*) "helicity", helicity(i2), helicity(i4), helicity(i3)
-!        write(*,*)  "amp 102"
         rslt = amp_102(Tin)
+!        rslt = 0
         else if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.1) then
-!        write(*,*) "helicity", helicity(i2), helicity(i4), helicity(i3)
-!        write(*,*)  "amp 103"
-        rslt = amp_103(Tin)
+!        rslt = amp_103(Tin)
+!        rslt = 0
         end if
     end if
 
@@ -152,23 +133,14 @@ end function
     i1=1 ;i2=2 ;i3=4; i4=3
     !
     rslt = 0
-!    write(*,*) "102"
-!    call T%set_direction(i3,i1)
-!    vv = MZ/(T%ang(i3,i1)*T%sqr(i1,i3))
-!    xx = (T%sqr(i4,i3)*T%ang(i3,i4)/MZ + vv*T%ang(i1,i2)*T%sqr(i2,i1))/(MZ_sq+T%ang(i4,i3,i4))
-!    yy = (T%sqr(i2,i3)*T%ang(i3,i2)/MZ + vv*T%ang(i1,i4)*T%sqr(i4,i1))/(MZ_sq+T%ang(i2,i3,i2))
-!    zz = T%sqr(i4,i1)*T%ang(i1,i2)/(T%Q(i1)%kapp*T%Q(i1)%kstr)
-!    rslt = sqrt_2*zz*(-xx+yy)
+    call T%set_direction(i3,i1)
+    vv = MZ/(T%ang(i3,i1)*T%sqr(i1,i3))
+    xx = (T%sqr(i4,i3)*T%ang(i3,i4)/MZ + vv*T%ang(i1,i2)*T%sqr(i2,i1))/(MZ_sq+T%ang(i4,i3,i4))
+    yy = (T%sqr(i2,i3)*T%ang(i3,i2)/MZ + vv*T%ang(i1,i4)*T%sqr(i4,i1))/(MZ_sq+T%ang(i2,i3,i2))
+    zz = T%sqr(i4,i1)*T%ang(i1,i2)/(T%Q(i1)%kapp*T%Q(i1)%kstr)
+    rslt = sqrt_2*zz*(-xx+yy)
 
 
-    call T%set_direction(i3,i2)
-    uu = T%sqr(i4,i2)*T%ang(i2,i1)*T%ang(i2,i1)/(T%ang(i3,i2)*T%sqr(i2,i3))
-    ww = 1/(MZ*T%Q(i1)%kapp*T%Q(i1)%kstr)
-    xx = T%sqr(i4,i3)*T%ang(i1,i2)*(T%ang(i3,i1)*T%Q(i1)%kapp+T%ang(i3,i2)*T%sqr(i2,i1)) &
-       /(MZ_sq+T%ang(i4,i3,i4))
-    yy = T%sqr(i4,i1)*T%ang(i3,i2)*(T%sqr(i1,i3)*T%Q(i1)%kstr+T%ang(i1,i4)*T%sqr(i4,i3)) &
-       /(MZ_sq+T%ang(i2,i3,i2))
-    rslt = sqrt_2*(ww*uu+ww*(xx-yy))
     end function
 
 

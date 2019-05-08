@@ -100,7 +100,7 @@ module amp4hef_qomentum
     procedure :: shift_kstr=>list_shift_kstr
     procedure :: cterm=>list_cterm
     procedure :: dterm=>list_dterm
-    procedure :: set_direction=>list_set_dir
+    procedure :: set_direction
 !    procedure :: s=>list_s
 
   end type
@@ -469,7 +469,7 @@ contains
 ! ask for integer arguments, 
 ! eg. l%ang(1,2)= l%p(1)%angL*l%p(2)%Rang etc.
 
-  subroutine list_set_dir( obj ,i3, i1 )
+  subroutine set_direction( obj ,i3, i1 )
   class(qomentum_list_type) :: obj
   integer,intent(in) :: i1,i3
   real(fltknd):: direction(0:3)

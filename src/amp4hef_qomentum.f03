@@ -190,6 +190,7 @@ contains
     obj%k%c22 = mom(        0 ) - mom(vecPerm(3))
   else
     obj%lightlike = .true.
+    obj%direction(0:3) = mom(0:3)
     cmpnnt2ima = mom(vecPerm(2))*imag
     obj%p%c11 = mom(        0 ) + mom(vecPerm(3))
     obj%p%c12 = mom(vecPerm(1)) - cmpnnt2ima
@@ -470,48 +471,13 @@ contains
 ! eg. l%ang(1,2)= l%p(1)%angL*l%p(2)%Rang etc.
 
   subroutine set_direction( obj ,i3, i1 )
-  class(qomentum_list_type) :: obj
-  integer,intent(in) :: i1,i3
-  real(fltknd):: direction(0:3)
-!  write(*,*) "momentum:", obj%Q(i3)%momentum(0)**2 - obj%Q(i3)%momentum(1)**2 - &
-!                          obj%Q(i3)%momentum(2)**2 - obj%Q(i3)%momentum(3)**2
-!  write(*,*) "set direction"
-  if (obj%Q(i1)%lightlike) then
-    direction(0:3) = obj%Q(i3)%momentum(0:3) -MZ_sq/(2*mom_product(i1,i3))* obj%Q(i1)%momentum(0:3)
-  else
-    direction(0:3) = obj%Q(i3)%momentum(0:3) -MZ_sq/(2*mom_product(i1,i3))*obj%Q(i1)%direction(0:3)
-  endif
-  call obj%Q(i3)%fill( obj%Q(i3)%momentum(0:3), direction(0:3))
-
-  contains
-    function mom_product(i1,i3) result(rslt)
-      integer,intent(in) :: i1,i3
-      complex(fltknd) :: rslt
-      if (obj%Q(i1)%lightlike) then
-        rslt= obj%Q(i3)%momentum(0)*obj%Q(i1)%momentum(0) - obj%Q(i3)%momentum(1)*obj%Q(i1)%momentum(1)&
-            - obj%Q(i3)%momentum(2)*obj%Q(i1)%momentum(2) - obj%Q(i3)%momentum(3)*obj%Q(i1)%momentum(3)
-      else
-        rslt= obj%Q(i3)%momentum(0)*obj%Q(i1)%direction(0) - obj%Q(i3)%momentum(1)*obj%Q(i1)%direction(1)&
-            - obj%Q(i3)%momentum(2)*obj%Q(i1)%direction(2) - obj%Q(i3)%momentum(3)*obj%Q(i1)%direction(3)
-      endif
-    end function
+    class(qomentum_list_type) :: obj
+    integer,intent(in) :: i1,i3
+    real(fltknd):: direction(0:3)
+    direction(0:3) = obj%Q(i3)%momentum(0:3) - twodot(obj%Q(i3)%k, obj%Q(i3)%k) &
+                   /(2*twodot(obj%Q(i1)%p, obj%Q(i3)%k))* obj%Q(i1)%momentum(0:3)
+    call obj%Q(i3)%fill(obj%Q(i3)%momentum(0:3), direction(0:3))
   end subroutine
-
-
-!  function list_s(obj, i1, i3) result(rslt)
-!    integer,intent(in) :: i1,i3
-!    class(qomentum_list_type) :: obj
-!    complex(fltknd) :: rslt
-!    rslt = mom_product(i1,i1)+2*mom_product(i1,i3)+mom_product(i3,i3)
-!
-!  contains
-!  function mom_product(i1,i3) result (rslt)
-!    integer,intent(in) :: i1,i3
-!    complex(fltknd) :: rslt
-!    rslt= obj%Q(i3)%momentum(0)*obj%Q(i1)%momentum(0) - obj%Q(i3)%momentum(1)*obj%Q(i1)%momentum(1)&
-!         -obj%Q(i3)%momentum(2)*obj%Q(i1)%momentum(2) - obj%Q(i3)%momentum(3)*obj%Q(i1)%momentum(3)
-!    end function
-!end function
 
   function list_ang( obj ,i1,i2 ) result(rslt)
 ! <12>

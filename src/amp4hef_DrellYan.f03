@@ -7,10 +7,10 @@ module amp4hef_DrellYan
   public :: fill_matrices_DrellYan,matrix_element_DrellYan ,amplitude_DrellYan ,all_amplitudes_DrellYan
 
   real, parameter :: sqrt_2 = 1.41421356237_fltknd
-  real, parameter :: MZ = 91.1882
-!  real, parameter :: MZ = 0
-  real(fltknd), parameter:: MZ_sq = 8315.2878192399512
-!  real(fltknd), parameter:: MZ_sq = 0
+!  real, parameter :: MZ = 91.1882
+  real, parameter :: MZ = 0
+!  real(fltknd), parameter:: MZ_sq = 8315.2878192399512
+  real(fltknd), parameter:: MZ_sq = 0
 
   real, parameter :: cV = 0.203666_fltknd
   real, parameter :: cA = 0.5_fltknd
@@ -95,10 +95,10 @@ contains
 	i2=1 ;i3=3; i4=2 !indexing only for helicity configuration not for qomentum class
  if(Ntot.eq.4) then
         if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.-1) then
-!        rslt = amp_101(Tin)
+        rslt = amp_101(Tin)
 !        rslt = 0
         else if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.0) then
-        rslt = amp_102(Tin)
+!        rslt = amp_102(Tin)
 !        rslt = 0
         else if (helicity(i2).eq.-1.and.helicity(i4).eq.1.and.helicity(i3).eq.1) then
 !        rslt = amp_103(Tin)

@@ -472,8 +472,8 @@ contains
     class(qomentum_list_type) :: obj
     integer,intent(in) :: i1,i3
     real(fltknd):: direction(0:3)
-    direction(0:3) = obj%Q(i3)%momentum(0:3) - twodot(obj%Q(i3)%k, obj%Q(i3)%k) &
-                   /(2*twodot(obj%Q(i1)%p, obj%Q(i3)%k))* obj%Q(i1)%momentum(0:3)
+    direction(0:3) = obj%Q(i3)%momentum(0:3) - square(obj%Q(i3)%k) &
+                   /twodot(obj%Q(i1)%p, obj%Q(i3)%k)* obj%Q(i1)%momentum(0:3)
     call obj%Q(i3)%fill(obj%Q(i3)%momentum(0:3), direction(0:3))
   end subroutine
 

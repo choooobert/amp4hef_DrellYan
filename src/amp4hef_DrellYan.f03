@@ -7,10 +7,8 @@ module amp4hef_DrellYan
   public :: fill_matrices_DrellYan,matrix_element_DrellYan ,amplitude_DrellYan ,all_amplitudes_DrellYan
 
   real, parameter :: sqrt_2 = 1.41421356237_fltknd
-!  real, parameter :: MZ = 91.1882
-  real, parameter :: MZ = 0
-!  real(fltknd), parameter:: MZ_sq = 8315.2878192399512
-  real(fltknd), parameter:: MZ_sq = 0
+  real(fltknd) :: MZ
+  real(fltknd) :: MZ_sq
 
   real, parameter :: cV = 0.203666_fltknd
   real, parameter :: cA = 0.5_fltknd
@@ -31,7 +29,8 @@ contains
   complex(fltknd) :: amp(12, 2, 2)
   integer :: ii,NhelSum,Nminus2, NhelConf, Nperm, jj,kk
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff )
-
+    MZ_sq = square(Tin%Q(Ntot)%k)
+    MZ    = sqrt(MZ_sq)
     NhelConf = 6
     NhelSum = 3
     if(Ntot.eq.5) then

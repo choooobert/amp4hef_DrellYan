@@ -29,8 +29,14 @@ contains
   complex(fltknd) :: amp(12, 2, 2)
   integer :: ii,NhelSum,Nminus2, NhelConf, Nperm, jj,kk
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff )
+
     MZ_sq = square(Tin%Q(Ntot)%k)
     MZ    = sqrt(MZ_sq)
+    if (MZ_sq.lt.1) then
+        MZ = 0
+        MZ_sq =0
+    end if
+
     NhelConf = 6
     NhelSum = 3
     if(Ntot.eq.5) then
@@ -41,13 +47,11 @@ contains
 
   rslt = 0
     do ii=1, (NhelConf/2)
-      write(*,*) ii
       do jj=1, Nperm
         if (Ntot.eq.4) then
           amp(ii, jj, 1) = amplitude_DrellYan(Tin ,helTable_DrellYan(:,ii), [1], 1)
         else if (Ntot.eq.5) then
           do kk=1,2
-            write(*,*) ii,kk,jj
             amp(ii, kk, jj) = amplitude_DrellYan(Tin ,helTable_DrellYan(:,ii), perTable(1:NPerm, jj), kk)
           enddo
         endif
@@ -106,15 +110,15 @@ contains
           rslt = amp_237(Tin, perm)
         end if
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.0) then
-          call Tin%set_direction(i3,i4)
-          rslt = 0
+!        call Tin%set_direction(i3,i4)
+        rslt = 0
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.1) then
-        call Tin%set_direction(i3,i2)
-        if(type.eq.1) then
-          rslt = amp_203(Tin, perm) + amp_215(Tin, perm)
-        else if(type.eq.2) then
-          rslt = amp_245(Tin, perm)
-        end if
+!        call Tin%set_direction(i3,i2)
+!        if(type.eq.1) then
+!          rslt = amp_203(Tin, perm) + amp_215(Tin, perm)
+!        else if(type.eq.2) then
+!          rslt = amp_245(Tin, perm)
+!        end if
         rslt = 0
       end if
 
@@ -203,7 +207,7 @@ end function
     write(*,*) "amp_201"
     xx= T%sqr(i4,i5)*T%sqr(i4,i5)* T%ang(i1,i2)/T%sqr(i4,i3)
     yy = T%ang(i3,i1) + T%ang(i3,i2)*T%sqr(i2,i1)/ T%Q(i1)%kapp
-    zz = (-T%Q(i1)%kapp*T%Q(i1)%kstr+T%ang(i2,i1,i2))*(-T%Q(i5)%kapp*T%Q(i5)%kstr+T%ang(i4,i5,i4))*T%Q(i1)%kstr*T%Q(i5)%kapp
+    zz = (square(T%Q(i1)%k)+T%ang(i2,i1,i2))*(square(T%Q(i5)%k)+T%ang(i4,i5,i4))*T%Q(i1)%kstr*T%Q(i5)%kapp
     rslt = 2*sqrt_2*xx*yy/zz
     end function
 !
@@ -344,10 +348,10 @@ end function
         * T%Q(i5)%kapp*T%Q(i5)%kstr*T%Q(i1)%kapp*T%Q(i1)%kstr)
     uu = T%ang(i1,i5)*T%sqr(i5,i1)/2
     vv = T%sqr(i4,i1,i3) + T%sqr(i2,i4)/T%sqr(i3,i4)*T%sqr(i4,i1,i2)
-    bb = -T%ang(i1,i5,i1) + T%ang(i1,i5)*T%sqr(i5,i1)*T%Q(i5)%kapp*T%Q(i5)%kstr/T%ang(i5,i1,i5)
-    dd = T%ang(i5,i3) + T%ang(i5,i2)*T%sqr(i2,i4)/T%sqr(i3,i4)
-    ff = T%sqr(i4,i5)
-    rslt =i*2*sqrt_2*xx*(uu*vv + ff*bb*dd)
+    bb = T%ang(i5,i1,i5) - T%ang(i1,i5)*T%sqr(i5,i1)*T%Q(i1)%kapp*T%Q(i1)%kstr/T%ang(i1,i5,i1)
+    dd = T%ang(i1,i3) + T%ang(i1,i2)*T%sqr(i2,i4)/T%sqr(i3,i4)
+    ff = T%sqr(i4,i1)
+    rslt =i*2*xx*(uu*vv - ff*bb*dd)
     end function
 !
 !    function amp_238(T, perm) result(rslt)
@@ -440,34 +444,38 @@ end function
   end subroutine
 
 
- function colorSum( Ntot ,a ) result(rslt)
+function colorSum( Ntot ,t ) result(rslt)
   integer,intent(in) :: Ntot
-  complex(fltknd),intent(in) :: a(2,2)
-  complex(fltknd) :: rslt ,z(2,2) ,uu,vv,ww,xx,yy
+  complex(fltknd),intent(in) :: t(2,2)
+  complex(fltknd) :: rslt ,z(2,2), a, b, c, az, bz, cz
   real(fltknd) :: AA, BB, CC, AB, AC, BC
   integer :: Nadj,i
 !
   Nadj = Ncolor(2)-1
 !
-  AA = 256./3. ; BB = 256./3. ; CC = 768.
+  AA = 256./3. ; BB = 256./3. ; CC = 2*384.
   AB = -32./3. ; AC = -192.   ; BC = 192.
 
   select case (Ntot)
   case (4)
-    rslt = conjg(a(1,1))*a(1, 1) * Nadj
+    rslt = conjg(t(1,1))*t(1, 1) * Nadj
 
   case (5)
-    z(1:2, 1:2) = conjg(a(1:2, 1:2))
-    rslt = AA*a(1,1)*z(1,1) + BB*a(1,2)*z(1,2) &
-         + CC*(a(2,1)-a(2,2))*(z(2,1)-z(2,2)) &
-         + AB*(a(1,1)*z(1,2) + a(1,2)*z(1,1)) &
-         + AC*(a(1,1)*(z(2,1)-z(2,2)) + (a(2,1)-a(2,2))*z(1,1)) &
-         + AC*(a(1,2)*(z(2,1)-z(2,2)) + (a(2,1)-a(2,2))*z(1,2))
+    z(1:2, 1:2) = conjg(t(1:2, 1:2))
+    a = t(1,1)
+    az= z(1,1)
+    b = t(1,2)
+    bz= z(1,2)
+    c = t(2,1)-t(2,2)
+    cz= z(2,1)-z(2,2)
+    rslt = AA*a*az + BB*b*bz + CC*c*cz &
+         + AB*(a*bz + b*az) &
+         + AC*(a*cz + c*az) &
+         + BC*(b*cz + c*bz)
   case default
     rslt = 0
-
   end select
-  end function
+end function
 
 
 end module

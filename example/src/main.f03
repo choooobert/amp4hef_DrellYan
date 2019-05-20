@@ -11,8 +11,8 @@ program mainMC
   integer :: id1,Nperm,NhelConf, NZ
   real(fltknd) :: Ecm,kTsq(2),sHat
   real(fltknd) :: momenta(0:3,8),directions(0:3,5),ampSquared
-  real(fltknd) :: eventWeight,matElem,psWeight,cnstWeight,totalWeight
-  real(fltknd) :: partonLumi,alphaStrong,flux
+  real(fltknd) :: eventWeight,matElemData,psWeight,cnstWeight,totalWeight
+  real(fltknd) :: partonLumi,alphaStrong,flux, renomScale
   real(fltknd) :: sumW0,sumW1,sumW2
   character(72) :: eventFile,line
   complex(fltknd) :: amp(64,120),ampStr(64,120),factor
@@ -96,7 +96,7 @@ program mainMC
     call matrix_element_b( id1 ,ampSquared )
 !    write(*,*) "matrix element squared from data: ", matElem
 !    write(*,*) "matrix element calculated by me : ", ampSquared
-    write(*,*) "ratio :", matElem/ampSquared
+    write(*,*) "matrix element ratio :", matElemData/ampSquared
 !   Determine the total weight of the event.
     !alphaStrong = 1.
     totalWeight = cnstWeight / flux * partonLumi &
@@ -104,7 +104,8 @@ program mainMC
 !   Gather statistics.
     sumW1 = sumW1 + totalWeight
     sumW2 = sumW2 + totalWeight**2
-
+    write(*,*) '( re-calculated weight )/( weight from file ):' &
+              ,totalWeight/eventWeight
 !   Compare calculated weight with the number from the file.
 !    write(*,*) '( re-calculated weight )/( weight from file ):' &
 !              ,totalWeight/eventWeight
@@ -135,7 +136,7 @@ program mainMC
     do ii=1,Nfinst
       read(eventUnit,*) momenta(0:3,ii+2) 
     enddo
-    read(eventUnit,*) matElem, partonLumi,alphaStrong, psWeight
+    read(eventUnit,*) matElemData, partonLumi,alphaStrong, renomScale
     end subroutine
     function momSquared( qq ) result(rslt)
     intent(in) :: qq

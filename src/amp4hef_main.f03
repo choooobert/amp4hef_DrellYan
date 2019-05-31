@@ -184,6 +184,9 @@ endif
   integer,intent(in) :: id
   real(fltknd),intent(in) :: momenta(0:3,*) ,directions(0:3,*)
   integer :: ii,Noff2
+
+  real(fltknd) :: P1(0:3), P2(0:3), P(0,3), Pm_wave(0:3), Pp_wave(0:3),&
+                  sqrt_S, M_sq, MT, Pp(0:3), Pm(0:3), ap, am, Z(0:3)
   associate( Ntot=>glob(id)%Ntot ,Noff=>glob(id)%Noff ,NZ=>glob(id)%NZ)
   Noff2 = Noff+1
   do ii=1,Noff
@@ -197,8 +200,31 @@ endif
     glob(id)%Q(ii)%kstr = glob(id)%ang(ii,ii,Noff2)/glob(id)%sqr(ii,Noff2)
     glob(id)%Q(ii)%kapp = glob(id)%ang(Noff2,ii,ii)/glob(id)%ang(Noff2,ii)
   enddo
-  end associate
 
+  !build polarization vectors
+  sqrt_S = 13000.
+  P1 = [sqrt_S/2., 0._fltknd, 0._fltknd, sqrt_S/2.]
+  P2 = [sqrt_S/2., 0._fltknd, 0._fltknd,-sqrt_S/2.]
+  M_sq = mom_dot(momenta(0:3,Ntot), momenta(0:3,Ntot))
+  MT =sqrt(M_sq + momenta(1,Ntot)**2 + momenta(2,Ntot)**2)
+  Pp = P1+P2
+  Pm = P1-P2
+  Pm_wave = Pm - mom_dot(momenta(0:3,Ntot), Pm)/M_sq*momenta(0:3,Ntot)
+  Pp_wave = Pp - mom_dot(momenta(0:3,Ntot), Pp)/M_sq*momenta(0:3,Ntot)
+  ap = mom_dot(momenta(0:3,Ntot), Pp)
+  am =-mom_dot(momenta(0:3,Ntot), Pm)
+  Z = 1/(sqrt_S**2 * MT)*(am*Pp_wave + ap*Pm_wave)
+  write(*,*) "Z", Z
+  write(*,*) "Z sq", mom_dot(Z,Z)
+
+  end associate
+  contains
+  function mom_dot(m1, m2)  result(rslt)
+    real(fltknd),intent(in) :: m1(0:3) , m2(0:3)
+    real(fltknd) :: rslt
+
+    rslt = m1(0)*m2(0) - m1(1)*m2(1) - m1(2)*m2(2) - m1(3)*m2(3)
+  end function
   end subroutine
 
 
@@ -233,21 +259,21 @@ endif
   end subroutine
 
 
-  subroutine amplitude( id ,rslt ,helicity ,perm, type )
+  subroutine amplitude( id ,rslt ,helicity ,perm )
 ! Helicities should follow the process as given to put_process,
 ! so for example helicities refering to off-shell gluons are ignored.
-  integer,intent(in) :: id ,helicity(:) ,perm(:), type
+  integer,intent(in) :: id ,helicity(:) ,perm(:)
   complex(fltknd),intent(out) :: rslt
   associate( o=>glob(id) )
-  rslt = o%amplitude( helicity(o%helOrder(1:o%NhelOrder)) ,perm, type )
+  rslt = o%amplitude( helicity(o%helOrder(1:o%NhelOrder)) ,perm )
   end associate
   end subroutine
 
-  subroutine amplitude_cpp( id ,rslt ,helicity ,perm, type )
-  integer,intent(in) :: id ,helicity(NsizeProc) ,perm(NsizeProc), type
+  subroutine amplitude_cpp( id ,rslt ,helicity ,perm )
+  integer,intent(in) :: id ,helicity(NsizeProc) ,perm(NsizeProc)
   complex(fltknd),intent(out) :: rslt
   associate( o=>glob(id) )
-  rslt = o%amplitude( helicity(o%helOrder(1:o%NhelOrder)) ,perm, type )
+  rslt = o%amplitude( helicity(o%helOrder(1:o%NhelOrder)) ,perm )
   end associate
   end subroutine
 

@@ -1,5 +1,6 @@
 program mainMC
   use amp4hef
+  use main_DrellYan
   implicit none
   
   integer,parameter :: eventUnit=21
@@ -17,6 +18,8 @@ program mainMC
   character(72) :: eventFile,line
   complex(fltknd) :: amp(64,120),ampStr(64,120),factor
   
+  real(fltknd) :: sqrt_S, P1(0:3), P2(0:3), Y, qT(1:2), M, x1, x2, k1T(1:2), k2T(1:2), z, fi, kT(1:2), xq
+  real(fltknd) :: k1(0:3), k2(0:3), p3(0:3), p4(0:3), q(0:3)
 ! Obvious.
   call get_command_argument(1,eventFile)
 !
@@ -94,18 +97,18 @@ program mainMC
 !   average over initial-state colors, and the final-state symmetry factor.
     call put_momenta( id1 ,momenta ,directions )
     call matrix_element_b( id1 ,ampSquared )
-!    write(*,*) "matrix element squared from data: ", matElem
-!    write(*,*) "matrix element calculated by me : ", ampSquared
     write(*,*) "matrix element ratio :", matElemData/ampSquared
 !   Determine the total weight of the event.
     !alphaStrong = 1.
     totalWeight = cnstWeight / flux * partonLumi &
-                * ampSquared * alphaStrong**(Nfinst-NZ) *alphaWeak**(NZ)
+                * ampSquared
+
+
 !   Gather statistics.
     sumW1 = sumW1 + totalWeight
     sumW2 = sumW2 + totalWeight**2
-    write(*,*) '( re-calculated weight )/( weight from file ):' &
-              ,totalWeight/eventWeight
+!    write(*,*) '( re-calculated weight )/( weight from file ):' &
+!              ,totalWeight/eventWeight
 !   Compare calculated weight with the number from the file.
 !    write(*,*) '( re-calculated weight )/( weight from file ):' &
 !              ,totalWeight/eventWeight
@@ -117,24 +120,26 @@ program mainMC
 ! Obvious.  
   close(eventUnit)
 
-! Finalize statistics.
-  write(*,*) 'cross section (in nb):',sumW1/sumW0
-  write(*,*) 'error estimate (in %):',100*sqrt((sumW2*sumW0/sumW1**2-1)/(sumW0-1))
- 
- 
+  sqrt_S = 13000.
+  Y = 0.25
+  qT = [12., 24.]
+  kT = [13., 31.]
+  xq = 0.23
+  M = 83.154
+  call matrix_element_2x2(sqrt_S,  Y, qT, M, xq, kT, ampSquared)
   contains
-  
-  
+
+
     subroutine read_event
     read(eventUnit,'(A)') line
     exitLoop = (trim(line).eq.'ENDOFFILE')
     if (exitLoop) return
     read(eventUnit,*) eventWeight
     if (eventWeight.eq.0) return
-    read(eventUnit,*) momenta(0:3,1) 
+    read(eventUnit,*) momenta(0:3,1)
     read(eventUnit,*) momenta(0:3,2)
     do ii=1,Nfinst
-      read(eventUnit,*) momenta(0:3,ii+2) 
+      read(eventUnit,*) momenta(0:3,ii+2)
     enddo
     read(eventUnit,*) matElemData, partonLumi,alphaStrong, renomScale
     end subroutine
@@ -143,6 +148,6 @@ program mainMC
     real(fltknd) :: qq(0:3),rslt
     rslt = ( qq(0)-qq(3) )*( qq(0)+qq(3) )- qq(1)*qq(1) - qq(2)*qq(2)
     end function
-  
+
   
 end program

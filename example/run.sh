@@ -31,9 +31,10 @@ fi
 
 $amp4hefDir/create.sh -task source -build $buildDir
 cp $exampleDir/src/main.f03 $buildDir
+cp $exampleDir/src/main_DrellYan.f03 $buildDir
 
 cd $buildDir
-$FC amp4hef.f03 main.f03
+$FC amp4hef.f03 main_DrellYan.f03 main.f03
 cd $here
 
 time $buildDir/a.out $1

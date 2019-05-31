@@ -100,12 +100,14 @@ program mainMC
 !   Determine the total weight of the event.
     !alphaStrong = 1.
     totalWeight = cnstWeight / flux * partonLumi &
-                * ampSquared * alphaStrong**(Nfinst-NZ) *alphaWeak**(NZ)
+                * ampSquared
+
+
 !   Gather statistics.
     sumW1 = sumW1 + totalWeight
     sumW2 = sumW2 + totalWeight**2
-    write(*,*) '( re-calculated weight )/( weight from file ):' &
-              ,totalWeight/eventWeight
+!    write(*,*) '( re-calculated weight )/( weight from file ):' &
+!              ,totalWeight/eventWeight
 !   Compare calculated weight with the number from the file.
 !    write(*,*) '( re-calculated weight )/( weight from file ):' &
 !              ,totalWeight/eventWeight
@@ -120,21 +122,21 @@ program mainMC
 ! Finalize statistics.
   write(*,*) 'cross section (in nb):',sumW1/sumW0
   write(*,*) 'error estimate (in %):',100*sqrt((sumW2*sumW0/sumW1**2-1)/(sumW0-1))
- 
- 
+
+
   contains
-  
-  
+
+
     subroutine read_event
     read(eventUnit,'(A)') line
     exitLoop = (trim(line).eq.'ENDOFFILE')
     if (exitLoop) return
     read(eventUnit,*) eventWeight
     if (eventWeight.eq.0) return
-    read(eventUnit,*) momenta(0:3,1) 
+    read(eventUnit,*) momenta(0:3,1)
     read(eventUnit,*) momenta(0:3,2)
     do ii=1,Nfinst
-      read(eventUnit,*) momenta(0:3,ii+2) 
+      read(eventUnit,*) momenta(0:3,ii+2)
     enddo
     read(eventUnit,*) matElemData, partonLumi,alphaStrong, renomScale
     end subroutine
@@ -143,6 +145,6 @@ program mainMC
     real(fltknd) :: qq(0:3),rslt
     rslt = ( qq(0)-qq(3) )*( qq(0)+qq(3) )- qq(1)*qq(1) - qq(2)*qq(2)
     end function
-  
+
   
 end program

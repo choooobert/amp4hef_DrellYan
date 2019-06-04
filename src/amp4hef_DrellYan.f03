@@ -381,6 +381,7 @@ end function
     uu = T%ang(i1,i5)*T%sqr(i5,i1)/(2*square(T%Q(i1)%k)*square(T%Q(i5)%k))
     vv = (T%sqr(i3,i1,i2)-T%sqr(i3,i5,i2))&
        + T%ang(i2,i4)/T%ang(i2,i3)*(T%sqr(i4,i1,i2)-T%sqr(i4,i5,i2))
+<<<<<<< HEAD
 
     bb = -T%ang(i5,i1,i5)/(square(T%Q(i1)%k)*square(T%Q(i5)%k))&
     - T%ang(i1,i5)*T%sqr(i5,i1)/(T%ang(i1,i5,i1)*square(T%Q(i5)%k))
@@ -390,6 +391,17 @@ end function
     + T%ang(i1,i5)*T%sqr(i5,i1)/(T%ang(i5,i1,i5)*square(T%Q(i1)%k))
     gg = T%sqr(i3,i5)*T%ang(i5,i2) + T%sqr(i4,i5)*T%ang(i5,i2)*T%ang(i2,i4)/T%ang(i2,i3)
 
+=======
+
+    bb = -T%ang(i5,i1,i5)/(square(T%Q(i1)%k)*square(T%Q(i5)%k))&
+    - T%ang(i1,i5)*T%sqr(i5,i1)/(T%ang(i1,i5,i1)*square(T%Q(i5)%k))
+    dd = T%sqr(i3,i1)*T%ang(i1,i2) + T%sqr(i4,i1)*T%ang(i1,i2)*T%ang(i2,i4)/T%ang(i2,i3)
+
+    ff = T%ang(i1,i5,i1)/(square(T%Q(i1)%k)*square(T%Q(i5)%k))&
+    + T%ang(i1,i5)*T%sqr(i5,i1)/(T%ang(i5,i1,i5)*square(T%Q(i1)%k))
+    gg = T%sqr(i3,i5)*T%ang(i5,i2) + T%sqr(i4,i5)*T%ang(i5,i2)*T%ang(i2,i4)/T%ang(i2,i3)
+
+>>>>>>> 0ff53ba25d27d0b54a1b48f6309fe25bbe5c8745
     rslt = xx*(uu*vv + bb*dd + ff*gg)
     end function
 

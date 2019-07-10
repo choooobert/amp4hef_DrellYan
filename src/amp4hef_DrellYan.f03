@@ -240,8 +240,7 @@ end function
        + T%ang(i1,i5)*T%sqr(i5,i1)*square(T%Q(i5)%k)/T%ang(i5,i1,i5)
     gg = T%sqr(i4,i5)*T%ang(i5,[i2,i3], U, i2)
 
-    rslt = -xx*(uu*vv + bb*dd - ff*gg)
-    write(*,*) "A11 :", rslt
+    rslt = xx*(uu*vv + bb*dd - ff*gg)
     end function
 
 !
@@ -272,8 +271,7 @@ end function
        + T%ang(i1,i5)*T%sqr(i5,i1)*square(T%Q(i5)%k)/T%ang(i5,i1,i5)
     gg = T%sqr(i4,U,[i3,i4], i5)*T%ang(i5, i2)
 
-    rslt =-xx*(uu*vv - bb*dd + ff*gg)
-    write(*,*) "A14 :", rslt
+    rslt = xx*(uu*vv - bb*dd + ff*gg)
     end function
 
   subroutine fill_matrices_DrellYan

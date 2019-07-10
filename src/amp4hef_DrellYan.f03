@@ -97,32 +97,32 @@ contains
     iZ = Ntot + 3
     if(Ntot.eq.5) then
       if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.-1) then
-!      rslt_X =  amp_202(Tin, perm, iX) + amp_205(Tin, perm, iX) + amp_208(Tin, perm, iX) &
-!              + amp_211(Tin, perm, iX)+  amp_214(Tin, perm, iX)
-!      rslt_Y =  amp_202(Tin, perm, iY) + amp_205(Tin, perm, iY) + amp_208(Tin, perm, iY) &
-!              + amp_211(Tin, perm, iY)+  amp_214(Tin, perm, iY)
-!      rslt = (rslt_X - i*rslt_Y)/sqrt_2
+      rslt_X =  amp_202(Tin, perm, iX) + amp_205(Tin, perm, iX) + amp_208(Tin, perm, iX) &
+              + amp_211(Tin, perm, iX)+  amp_214(Tin, perm, iX)
+      rslt_Y =  amp_202(Tin, perm, iY) + amp_205(Tin, perm, iY) + amp_208(Tin, perm, iY) &
+              + amp_211(Tin, perm, iY)+  amp_214(Tin, perm, iY)
+      rslt = (rslt_X - i*rslt_Y)/sqrt_2
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.0) then
         rslt =  amp_202(Tin, perm, iZ) + amp_205(Tin, perm, iZ) + amp_208(Tin, perm, iZ) &
               + amp_211(Tin, perm, iZ)+  amp_214(Tin, perm, iZ)
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.1) then
-!      rslt_X =  amp_202(Tin, perm, iX) + amp_205(Tin, perm, iX) + amp_208(Tin, perm, iX) &
-!              + amp_211(Tin, perm, iX)+  amp_214(Tin, perm, iX)
-!      rslt_Y =  amp_202(Tin, perm, iY) + amp_205(Tin, perm, iY) + amp_208(Tin, perm, iY) &
-!              + amp_211(Tin, perm, iY)+  amp_214(Tin, perm, iY)
-!      rslt = -(rslt_X + i*rslt_Y)/sqrt_2
+      rslt_X =  amp_202(Tin, perm, iX) + amp_205(Tin, perm, iX) + amp_208(Tin, perm, iX) &
+              + amp_211(Tin, perm, iX)+  amp_214(Tin, perm, iX)
+      rslt_Y =  amp_202(Tin, perm, iY) + amp_205(Tin, perm, iY) + amp_208(Tin, perm, iY) &
+              + amp_211(Tin, perm, iY)+  amp_214(Tin, perm, iY)
+      rslt = -(rslt_X + i*rslt_Y)/sqrt_2
       end if
 
     else if(Ntot.eq.4) then
       if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.-1) then
-!        rslt_X = amp_102(Tin, iX)
-!        rslt_Y = amp_102(Tin, iY)
+        rslt_X = amp_102(Tin, iX)
+        rslt_Y = amp_102(Tin, iY)
         rslt = (rslt_X - i*rslt_Y)/sqrt_2
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.0) then
         rslt = amp_102(Tin, iZ)
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.1) then
-!        rslt_X = amp_102(Tin, iX)
-!        rslt_Y = amp_102(Tin, iY)
+        rslt_X = amp_102(Tin, iX)
+        rslt_Y = amp_102(Tin, iY)
         rslt = -(rslt_X + i*rslt_Y)/sqrt_2
       end if
     end if
@@ -240,8 +240,7 @@ end function
        + T%ang(i1,i5)*T%sqr(i5,i1)*square(T%Q(i5)%k)/T%ang(i5,i1,i5)
     gg = T%sqr(i4,i5)*T%ang(i5,[i2,i3], U, i2)
 
-    rslt = -xx*(uu*vv + bb*dd - ff*gg)
-    write(*,*) "A11 :", rslt
+    rslt = xx*(uu*vv + bb*dd - ff*gg)
     end function
 
 !
@@ -272,8 +271,7 @@ end function
        + T%ang(i1,i5)*T%sqr(i5,i1)*square(T%Q(i5)%k)/T%ang(i5,i1,i5)
     gg = T%sqr(i4,U,[i3,i4], i5)*T%ang(i5, i2)
 
-    rslt =-xx*(uu*vv - bb*dd + ff*gg)
-    write(*,*) "A14 :", rslt
+    rslt =xx*(uu*vv - bb*dd + ff*gg)
     end function
 
   subroutine fill_matrices_DrellYan

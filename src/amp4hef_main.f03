@@ -5,7 +5,7 @@ module amp4hef
 
   use amp4hef_io ,only: set_path,split_line
   use amp4hef_qomentum ,only: fltknd ,NsizeProc,NsizeFlavor &
-                             ,init_qomentum ,qomentum_list_type
+                             ,init_qomentum ,qomentum_list_type, square
   use amp4hef_aux ,only: NcolDof ,factorial
   use amp4hef_DrellYan
 
@@ -185,8 +185,8 @@ endif
   real(fltknd),intent(in) :: momenta(0:3,*) ,directions(0:3,*)
   integer :: ii,Noff2
 
-  real(fltknd) :: P1(0:3), P2(0:3), P(0,3), Pm_wave(0:3), Pp_wave(0:3),&
-                  sqrt_S, M_sq, MT, Pp(0:3), Pm(0:3), ap, am, Z(0:3)
+  real(fltknd) :: P1(0:3), P2(0:3), P(0,3), Pm_wave(0:3), Pp_wave(0:3), M, &
+                  sqrt_S, M_sq, MT, Pp(0:3), Pm(0:3), ap, am, Z(0:3), X(0:3), Y(0:3), q(0:3)
   associate( Ntot=>glob(id)%Ntot ,Noff=>glob(id)%Noff ,NZ=>glob(id)%NZ)
   Noff2 = Noff+1
   do ii=1,Noff
@@ -205,17 +205,32 @@ endif
   sqrt_S = 13000.
   P1 = [sqrt_S/2., 0._fltknd, 0._fltknd, sqrt_S/2.]
   P2 = [sqrt_S/2., 0._fltknd, 0._fltknd,-sqrt_S/2.]
-  M_sq = mom_dot(momenta(0:3,Ntot), momenta(0:3,Ntot))
-  MT =sqrt(M_sq + momenta(1,Ntot)**2 + momenta(2,Ntot)**2)
+  q(0:3) = momenta(0:3,Ntot)
+  M_sq = square(glob(id)%Q(Ntot)%k)
+  M = sqrt(M_sq)
+  MT =sqrt(M_sq + q(1)**2 + q(2)**2)
   Pp = P1+P2
   Pm = P1-P2
-  Pm_wave = Pm - mom_dot(momenta(0:3,Ntot), Pm)/M_sq*momenta(0:3,Ntot)
-  Pp_wave = Pp - mom_dot(momenta(0:3,Ntot), Pp)/M_sq*momenta(0:3,Ntot)
-  ap = mom_dot(momenta(0:3,Ntot), Pp)
-  am =-mom_dot(momenta(0:3,Ntot), Pm)
+  Pm_wave = Pm - mom_dot(q, Pm)/M_sq*q(0:3)
+  Pp_wave = Pp - mom_dot(q, Pp)/M_sq*q(0:3)
+  ap = mom_dot(q, Pp)
+  am =-mom_dot(q, Pm)
+  X = -sqrt(M_sq)/((sqrt_S**2)*sqrt(q(1)**2 + q(2)**2)*MT) &
+    *(ap*Pp_wave + am*Pm_wave)
   Z = 1/(sqrt_S**2 * MT)*(am*Pp_wave + ap*Pm_wave)
-  write(*,*) "Z", Z
-  write(*,*) "Z sq", mom_dot(Z,Z)
+  Y(0) = X(1)*Z(2)*q(3) + X(2)*Z(3)*q(1) + X(3)*Z(1)*q(2) &
+       - X(1)*Z(3)*q(2) - X(2)*Z(1)*q(3) - X(3)*Z(2)*q(1)
+  Y(1) = X(0)*Z(3)*q(2) + X(2)*Z(0)*q(3) + X(3)*Z(2)*q(0) &
+       - X(0)*Z(2)*q(3) - X(2)*Z(3)*q(0) - X(3)*Z(0)*q(2)
+  Y(2) = X(0)*Z(1)*q(3) + X(1)*Z(3)*q(0) + X(3)*Z(0)*q(1) &
+       - X(0)*Z(3)*q(1) - X(1)*Z(0)*q(3) + X(3)*Z(1)*q(0)
+  Y(3) = X(0)*Z(2)*q(1) + X(1)*Z(0)*q(2) + X(2)*Z(1)*q(0) &
+       - X(0)*Z(1)*q(2) - X(1)*Z(2)*q(0) - X(2)*Z(0)*q(1)
+  Y(0:3) = Y(0:3)/M
+
+  call glob(id)%Q(Ntot+1)%fill( X ,directions(0:3,Ntot) )
+  call glob(id)%Q(Ntot+2)%fill( Y ,directions(0:3,Ntot) )
+  call glob(id)%Q(Ntot+3)%fill( Z ,directions(0:3,Ntot) )
 
   end associate
   contains

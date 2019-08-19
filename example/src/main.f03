@@ -143,7 +143,7 @@ fi_kappa = 4.6200184696872997
   call matrix_element_2x3(S, x1, x2, k1T2, k2T2, fi_k1, fi_k2,  qT, xF ,M ,z &
                                ,fi_kappa, ampSquared)
   write(*,*) "2-jet process"
-  write(*,*) ampSquared/22416893515.195316
+  write(*,*) ampSquared/86332404941.668747
 S = 64000000.0
 x1 = 0.19533669948577898
 x2 = 0.22782330513000509
@@ -161,7 +161,7 @@ fi_kappa = 1.5532765884057573
 
   call matrix_element_2x3(S, x1, x2, k1T2, k2T2, fi_k1, fi_k2,  qT, xF ,M ,z &
                                ,fi_kappa, ampSquared)
-  write(*,*) ampSquared/35547311794.732552
+  write(*,*) ampSquared/645128538.81069422
 
 
 
@@ -181,14 +181,39 @@ fi_kappa = 5.9103488798390043
 
   call matrix_element_2x3(S, x1, x2, k1T2, k2T2, fi_k1, fi_k2,  qT, xF ,M ,z &
                                ,fi_kappa, ampSquared)
-    write(*,*) ampSquared/86332404941.668747
+    write(*,*) ampSquared/957540402.96254945
 
 write(*,*) "1-jet process"
 
-kT2 =0.00
-!kT2 = 391367.86529486376
+xq = 0.5856842
+
+qT = 211.50702546109113
+kT2 = 241367.86529486376
 fi_k =  3.8171116533087472
-xq = 0.58839664459228551
+  call matrix_element_2x2(S,  xF, qT, M, xq, kT2, fi_k, ampSquared)
+  write(*,*) ampSquared
+
+!qT = 157.50702546109113
+kT2 = 251367.86529486376
+fi_k =  3.8171116533087472
+  call matrix_element_2x2(S,  xF, qT, M, xq, kT2, fi_k, ampSquared)
+  write(*,*) ampSquared
+
+!qT = 302.50702546109113
+kT2 = 331367.86529486376
+fi_k =  3.8171116533087472
+  call matrix_element_2x2(S,  xF, qT, M, xq, kT2, fi_k, ampSquared)
+  write(*,*) ampSquared
+
+!qT = 190.50702546109113
+kT2 = 191367.86529486376
+fi_k =  3.8171116533087472
+  call matrix_element_2x2(S,  xF, qT, M, xq, kT2, fi_k, ampSquared)
+  write(*,*) ampSquared
+
+!qT = 202.50702546109113
+kT2 = 0.
+fi_k =  3.8171116533087472
   call matrix_element_2x2(S,  xF, qT, M, xq, kT2, fi_k, ampSquared)
   write(*,*) ampSquared
   contains

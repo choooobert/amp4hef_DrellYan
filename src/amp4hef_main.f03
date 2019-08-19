@@ -186,7 +186,7 @@ endif
   integer :: ii,Noff2
 
   real(fltknd) :: P1(0:3), P2(0:3), P(0,3), Pm_wave(0:3), Pp_wave(0:3), M, &
-                  sqrt_S, M_sq, MT, Pp(0:3), Pm(0:3), ap, am, Z(0:3), X(0:3), Y(0:3), q(0:3)
+                  sqrt_S, M_sq, MT, Pp(0:3), Pm(0:3), ap, am, Z(0:3), X(0:3), Y(0:3), q(0:3), qp, qm, qT
   associate( Ntot=>glob(id)%Ntot ,Noff=>glob(id)%Noff ,NZ=>glob(id)%NZ)
   Noff2 = Noff+1
   do ii=1,Noff
@@ -202,12 +202,13 @@ endif
   enddo
 
   !build polarization vectors
-  sqrt_S = 13000.
+  sqrt_S = 8000.
   P1 = [sqrt_S/2., 0._fltknd, 0._fltknd, sqrt_S/2.]
   P2 = [sqrt_S/2., 0._fltknd, 0._fltknd,-sqrt_S/2.]
   q(0:3) = momenta(0:3,Ntot)
   M_sq = square(glob(id)%Q(Ntot)%k)
   M = sqrt(M_sq)
+!  write(*,*) "M", M
   MT =sqrt(M_sq + q(1)**2 + q(2)**2)
   Pp = P1+P2
   Pm = P1-P2
@@ -215,9 +216,17 @@ endif
   Pp_wave = Pp - mom_dot(q, Pp)/M_sq*q(0:3)
   ap = mom_dot(q, Pp)
   am =-mom_dot(q, Pm)
+  !Collins-Soper frame
   X = -sqrt(M_sq)/((sqrt_S**2)*sqrt(q(1)**2 + q(2)**2)*MT) &
     *(ap*Pp_wave + am*Pm_wave)
   Z = 1/(sqrt_S**2 * MT)*(am*Pp_wave + ap*Pm_wave)
+
+  qp = q(0)+q(3)
+  qm = q(0)-q(3)
+  qT = sqrt(q(1)**2+q(2)**2)
+  !Gotfried-Jackson frame
+  X = 1/qT *(q - qp/sqrt_S*P1 - (qp*qm-2*qT**2)/(qp*sqrt_S)*P2)
+  Z = M/mom_dot(q, P2)*P2 - q/M
   Y(0) = X(1)*Z(2)*q(3) + X(2)*Z(3)*q(1) + X(3)*Z(1)*q(2) &
        - X(1)*Z(3)*q(2) - X(2)*Z(1)*q(3) - X(3)*Z(2)*q(1)
   Y(1) = X(0)*Z(3)*q(2) + X(2)*Z(0)*q(3) + X(3)*Z(2)*q(0) &
@@ -227,11 +236,16 @@ endif
   Y(3) = X(0)*Z(2)*q(1) + X(1)*Z(0)*q(2) + X(2)*Z(1)*q(0) &
        - X(0)*Z(1)*q(2) - X(1)*Z(2)*q(0) - X(2)*Z(0)*q(1)
   Y(0:3) = Y(0:3)/M
-
   call glob(id)%Q(Ntot+1)%fill( X ,directions(0:3,Ntot) )
   call glob(id)%Q(Ntot+2)%fill( Y ,directions(0:3,Ntot) )
   call glob(id)%Q(Ntot+3)%fill( Z ,directions(0:3,Ntot) )
 
+! write(*,*)  "square (p3-k1) :" ,mom_dot(momenta(0:3, 3)+ momenta(0:3,1), momenta(0:3, 3)+ momenta(0:3,1))
+! write(*,*)  "square (p4-k2) :" ,mom_dot(momenta(0:3, 4)+ momenta(0:3,2), momenta(0:3, 4)+ momenta(0:3,2))
+! write(*,*)  "square (p3-k2) :" ,mom_dot(momenta(0:3, 3)+ momenta(0:3,2), momenta(0:3, 3)+ momenta(0:3,2))
+! write(*,*)  "square (p4-k1) :" ,mom_dot(momenta(0:3, 4)+ momenta(0:3,1), momenta(0:3, 4)+ momenta(0:3,1))
+!
+!  write(*,*) "k1 k2: ", mom_dot(momenta(0:3, 1), momenta(0:3, 2))
   end associate
   contains
   function mom_dot(m1, m2)  result(rslt)

@@ -51,7 +51,7 @@ contains
 !  do ii=1, Noff
 !    rslt=rslt*(Tin%Q(ii)%kapp*Tin%Q(ii)%kstr)
 !  enddo
-  rslt = 2*rslt
+  rslt = 2*rslt/(4*sqrt(twodot(Tin%Q(1)%k, Tin%Q(2)%k)**2/4-square(Tin%Q(1)%k)*square(Tin%Q(2)%k)))
   end associate
   end function 
 
@@ -103,8 +103,8 @@ contains
 !              + amp_211(Tin, perm, iY)+  amp_214(Tin, perm, iY)
 !      rslt = (rslt_X - i*rslt_Y)/sqrt_2
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.0) then
-        rslt =  amp_202(Tin, perm, iZ) + amp_205(Tin, perm, iZ) + amp_208(Tin, perm, iZ) &
-              + amp_211(Tin, perm, iZ)+  amp_214(Tin, perm, iZ)
+        rslt =  amp_202(Tin, perm, iZ) !+ amp_205(Tin, perm, iZ) + amp_208(Tin, perm, iZ) &
+         !     + amp_211(Tin, perm, iZ)+  amp_214(Tin, perm, iZ)
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.1) then
 !      rslt_X =  amp_202(Tin, perm, iX) + amp_205(Tin, perm, iX) + amp_208(Tin, perm, iX) &
 !              + amp_211(Tin, perm, iX)+  amp_214(Tin, perm, iX)
@@ -115,14 +115,14 @@ contains
 
     else if(Ntot.eq.4) then
       if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.-1) then
-!        rslt_X = amp_102(Tin, iX)
-!        rslt_Y = amp_102(Tin, iY)
+        rslt_X = amp_102(Tin, iX)
+        rslt_Y = amp_102(Tin, iY)
         rslt = (rslt_X - i*rslt_Y)/sqrt_2
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.0) then
         rslt = amp_102(Tin, iZ)
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.1) then
-!        rslt_X = amp_102(Tin, iX)
-!        rslt_Y = amp_102(Tin, iY)
+        rslt_X = amp_102(Tin, iX)
+        rslt_Y = amp_102(Tin, iY)
         rslt = -(rslt_X + i*rslt_Y)/sqrt_2
       end if
     end if
@@ -149,6 +149,8 @@ end function
     yy = MZ_sq+T%ang(i4,i3,i4)
     zz = square(T%Q(i1)%k) + T%ang(i4,i1,i4)
     rslt = -xx/yy + vv/zz
+    rslt = zz
+!    rslt = -rslt/square(T%Q(i1)%k)
     end function
 
 
@@ -172,7 +174,6 @@ end function
     zz = (square(T%Q(i1)%k)+T%ang(i2,i1,i2))*(square(T%Q(i5)%k)+T%ang(i4,i5,i4))
     rslt = -xx/zz
     end function
-
 !
 !   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !    ! 2nd diagram amplitudes

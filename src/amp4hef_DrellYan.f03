@@ -115,17 +115,22 @@ contains
 
     else if(Ntot.eq.4) then
       if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.-1) then
-        rslt_X = amp_102(Tin, iX)
-        rslt_Y = amp_102(Tin, iY)
-        rslt = (rslt_X - i*rslt_Y)/sqrt_2
+!        rslt_X = amp_102(Tin, iX)
+!        rslt_Y = amp_102(Tin, iY)
+!        rslt = (rslt_X - i*rslt_Y)/sqrt_2
+!        write(*,*) rslt_X, rslt_Y
+
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.0) then
         rslt = amp_102(Tin, iZ)
+
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.1) then
-        rslt_X = amp_102(Tin, iX)
-        rslt_Y = amp_102(Tin, iY)
-        rslt = -(rslt_X + i*rslt_Y)/sqrt_2
+!        rslt_X = amp_102(Tin, iX)
+!        rslt_Y = amp_102(Tin, iY)
+!        rslt = -(rslt_X + i*rslt_Y)/sqrt_2
+!        write(*,*) rslt_X, rslt_Y
       end if
     end if
+
 
   end associate
 end function
@@ -137,19 +142,30 @@ end function
     function amp_102(T, Z) result(rslt)
     type(qomentum_list_type),intent(in) :: T
     integer, intent(in) :: Z
-    complex(fltknd) :: rslt,vv ,xx,yy, zz
-    integer :: i1, i2, i3, i4
+    complex(fltknd) :: rslt,vv ,xx,yy, zz, r1, r2, l2
+    complex(fltknd) :: l1, r3, r4, r5, r6, r7, r8, j
+    integer :: i1, i2, i3, i4, X, Y
     !
+    X = 5
+    Y = 6
+    j=(0.,1.)
     i1=1 ;i2=2 ;i3=4; i4=3
     !
     rslt = 0
-!    call T%set_direction(i3,i4)
-    xx = T%sqr(i4, Z, [i1,i2], i1)*T%ang(i1,i2)
-    vv = T%sqr(i4,i1)*T%ang(i1,[i1,i4],  Z, i2)
-    yy = MZ_sq+T%ang(i4,i3,i4)
-    zz = square(T%Q(i1)%k) + T%ang(i4,i1,i4)
-    rslt = -xx/yy + vv/zz
-    end function
+    l2 = square(T%Q(i3)%k) + twodot(T%Q(i2)%p, T%Q(i3)%k)
+
+    l1 = -square(T%Q(i3)%k) - twodot(T%Q(i4)%p, T%Q(i3)%k)
+    r3= -T%sqr(i4, X, [i3, i4], i1)*T%ang(i1, i2)
+    r4= -T%sqr(i4, Y, [i3, i4], i1)*T%ang(i1, i2)
+    r5= -T%sqr(i4, Z, [i3, i4], i1)*T%ang(i1, i2)
+    r6 = T%sqr(i4, i1)*T%ang(i1, [i2, i3], Y, i2)
+    r7 = T%sqr(i4, i1)*T%ang(i1, [i2, i3], Y, i2)
+    r8 = T%sqr(i4, i1)*T%ang(i1, [i2, i3], Z, i2)
+    rslt = r3/l1+r4/l2
+    write(*,*) "spinor ", r6*conjg(r4)/l2**2
+    write(*,*) "spinor ", r4*conjg(r6)/l2**2
+
+end function
 
 
 

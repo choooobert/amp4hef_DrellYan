@@ -10,19 +10,20 @@ contains
   subroutine matrix_element_2x2(S,  xF, qT, M, xq, kT2, fi_k, ampSquared)
     real(fltknd),intent(in)  :: qT, kT2, fi_k, S, xF, M, xq
     real(fltknd), intent(out) :: ampSquared
-    real(fltknd) :: momenta(0:3,8),directions(0:3,5), P1(0:3), P2(0:3), qT_tab(1:2), sqrt_S
+    real(fltknd) :: momenta(0:3,8),directions(0:3,5), P1(0:3), P2(0:3), qT_tab(1:2), sqrt_S, amp_algeb, z
     integer :: id1, Ntotal, Noff, NZ
 
     id1 = 1; Ntotal = 4; Noff = 1; NZ = 1
     call put_process( id1 ,Ntotal ,Noff , NZ, [0, -1, 1, 2] )
     sqrt_S = sqrt(S)
     call build_proton_momenta (sqrt_S, P1, P2)
-    qT_tab = [qT, 0._fltknd]
+    qT_tab = [qT*cos(3.14/6.), qT*sin(3.14/6.)]
 
     call build_momenta_2x2(P1, P2, xF, qT_tab, M, xq, sqrt(kT2)*[cos(fi_k), sin(fi_k)], momenta(0:3,1), &
                    momenta(0:3,2), momenta(0:3,3), momenta(0:3,4))
 
     directions(0:3,1) = - P1(0:3)
+    directions(0:3,2) = - P2(0:3)
 
     directions(0,Ntotal) = 1
     directions(1,Ntotal) = 0
@@ -30,6 +31,7 @@ contains
     directions(3,Ntotal) = 1
     call put_momenta( id1 ,momenta ,directions )
     call matrix_element_b( id1 ,ampSquared )
+    z = xF/xq
   end subroutine
 
 
@@ -78,10 +80,11 @@ contains
   subroutine build_momenta_2x2(P1, P2, xF, qT, M, xq, kT, k1, pp2, p3, q)
     real(fltknd),intent(in)  :: qT(1:2), kT(1:2), P1(0:3), P2(0:3), xF, M, xq
     real(fltknd),intent(out) :: k1(0:3), pp2(0:3), q(0:3), p3(0:3)
-    real(fltknd) :: MT, S, xg, z
+    real(fltknd) :: MT, S, xg, z, qTabs, D1, D2, kTqT, kTY, ab, gd, kTabs
 
 
     MT = sqrt( M*M + qT(1)**2 + qT(2)**2 )
+    qTabs= sqrt(qT(1)**2 + qT(2)**2 )
     S = (P1(0)+P2(0))**2 - (P1(1)+P2(1))**2 - (P1(2)+P2(2))**2 - (P1(3)+P2(3))**2
     z = xF/xq
     xg = ((1-z)*(M**2)+qT(1)**2+qT(2)**2) &
@@ -94,13 +97,32 @@ contains
     k1(1:2) = k1(1:2) + kT(1:2)
     pp2(0:3) = xq*P2(0:3)
 
-    q(0:3) = xF*P2(0:3) + MT**2/(xF*S)*P1(0:3)
+    q(0:3) = xF*P2(0:3) + (MT**2)*P1(0:3)/(xF*S)
     q(1:2) = q(1:2) + qT(1:2)
 
     p3(0:3) = k1(0:3) + pp2(0:3) - q(0:3)
     k1(0:3) = -k1(0:3)
     pp2(0:3) = -pp2(0:3)
+    kTqT = kT(1)*qT(1)+kT(2)*qT(2)
+    kTY = (kT(1)*qT(2)-kT(2)*qT(1))/qTabs
+    kTabs= sqrt(kT(1)**2 + kT(2)**2 )
+    D2 = MT**2-z*M**2
+    D1 = M**2*(1-z) + qTabs**2 + z**2*kTabs**2-2*z*kTqT
 
+!    write(*,*) "algebr ", 2*xq**2*S**2*(MT*qTabs/M/z*(z-2)*kTY)
+!    write(*,*) "algebr ", 2*xq**2*S**2*(M/MT*qTabs*z*kTY)
+!    write(*,*) "algebr ", -2/z*M+ MT**2/(z*M)
+
+!AI0**2
+    write(*,*) "algebr ", -xq**2*S**2/D2**2*(1-z)*MT**2/M*qTabs*(-1-2*z)
+
+!AI+**2
+!    write(*,*) "algebr ", -xq*S*(4*kTY**2+MT**2/(M**2*qTabs**2)*4*kTqT**2 &
+!    +(MT**2/(M**2*z**2)+xg*xq*S/M**2)*qTabs**2 &
+!    +(-xg*xF*S/M**2-2/z*MT**2/M**2-2-xg*xF*S/(M*MT))*2*kTqT &
+!    +4*xg*xF*S-2*xg*xq*S*(1-MT/M)+2*xq/xF*(MT**2-MT*M)-4*M**2 &
+!    -kTabs**2*(-xg*xF*z*qTabs**2*S/(MT*M)**2+2*z*kTqT*(1/M**2-1/(M*MT))-qTabs**2/M**2&
+!    + 2*(z-1)+2*(MT/M-z*M/MT)))
   end subroutine
 
 

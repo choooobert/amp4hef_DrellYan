@@ -78,7 +78,10 @@ module amp4hef_qomentum
     procedure :: list_ang_lk
     procedure :: list_ang_ll
     procedure :: list_ang_lkl
+    procedure :: list_ang_kkk
     procedure :: list_ang_klk
+    procedure :: list_ang_lkk
+    procedure :: list_ang_kkl
     procedure :: list_sqr
     procedure :: list_sqr_k
     procedure :: list_sqr_sl
@@ -91,10 +94,11 @@ module amp4hef_qomentum
     procedure :: list_sqr_klk
     generic :: ang=>list_ang,list_ang_k,list_ang_l ,list_ang_sl &
                    ,list_ang_kk,list_ang_kl,list_ang_lk,list_ang_ll &
-                   ,list_ang_klk, list_ang_lkl
+                   ,list_ang_klk, list_ang_lkl, list_ang_kkk, list_ang_lkk &
+                   , list_ang_kkl
     generic :: sqr=>list_sqr,list_sqr_k,list_sqr_l ,list_sqr_sl &
                    ,list_sqr_kk,list_sqr_kl,list_sqr_lk,list_sqr_ll &
-                   ,list_sqr_klk, list_sqr_lkl
+                   ,list_sqr_klk, list_sqr_lkl, list_ang_kkk
 
     procedure :: sinv=>list_sinv_2
     procedure :: transvec=>list_transvec
@@ -592,6 +596,34 @@ contains
   rslt = obj%Q(i1)%angL *obj%Q(i3)%k * k4 *obj%Q(i5)%k * obj%Q(i2)%Rsqr
   end function
 
+  function list_ang_lkk( obj ,i1 ,i3,i4, i5 ,i2 ) result(rslt)
+! <1|(k3(1)+k3(2)+...)*k4*k5|2]
+  class(qomentum_list_type) :: obj
+  integer,intent(in) :: i1,i2,i3(:),i4, i5
+  complex(fltknd) :: rslt
+  type(slashed_type) :: k3
+  integer :: ii
+  k3 = zeroSlash
+  do ii=1,size(i3)
+    k3 = k3 + obj%Q(i3(ii))%k
+  enddo
+  rslt = obj%Q(i1)%angL *k3 * obj%Q(i4)%k *obj%Q(i5)%k * obj%Q(i2)%Rsqr
+  end function
+
+  function list_ang_kkl( obj ,i1 ,i3,i4, i5 ,i2 ) result(rslt)
+! <1|(k3*k4*(k5(1)+k5(2)+ ...)|2]
+  class(qomentum_list_type) :: obj
+  integer,intent(in) :: i1,i2,i3,i4, i5(:)
+  complex(fltknd) :: rslt
+  type(slashed_type) :: k5
+  integer :: ii
+  k5 = zeroSlash
+  do ii=1,size(i5)
+    k5 = k5 + obj%Q(i5(ii))%k
+  enddo
+  rslt = obj%Q(i1)%angL *obj%Q(i3)%k * obj%Q(i4)%k *k5 * obj%Q(i2)%Rsqr
+  end function
+
   function list_ang_lkl( obj ,i1 ,i3,i4, i5 ,i2 ) result(rslt)
 ! <1|(k3(1)+k3(2)+...)*k4*(k5(1)+k5(2)+...)|2]
   class(qomentum_list_type) :: obj
@@ -608,6 +640,14 @@ contains
     k5 = k5 + obj%Q(i5(ii))%k
   enddo
   rslt = obj%Q(i1)%angL * k3 * obj%Q(i4)%k * k5 * obj%Q(i2)%Rsqr
+  end function
+
+  function list_ang_kkk( obj ,i1 ,i3,i4, i5 ,i2 ) result(rslt)
+! <1|(k3*k4*k5|2]
+  class(qomentum_list_type) :: obj
+  integer,intent(in) :: i1,i2,i3,i4, i5
+  complex(fltknd) :: rslt
+  rslt = obj%Q(i1)%angL * obj%Q(i3)%k * obj%Q(i4)%k * obj%Q(i5)%k * obj%Q(i2)%Rsqr
   end function
 
   function list_sqr( obj ,i1,i2 ) result(rslt)
@@ -715,6 +755,15 @@ contains
     k4 = k4 + obj%Q(i4(ii))%k
   enddo
   rslt = obj%Q(i1)%sqrL *obj%Q(i3)%k * k4 *obj%Q(i5)%k * obj%Q(i2)%Rang
+  end function
+
+  function list_sqr_kkk( obj ,i1 ,i3,i4, i5 ,i2 ) result(rslt)
+! [1|k3*k4*k5|2>
+  class(qomentum_list_type) :: obj
+  integer,intent(in) :: i1,i2,i3,i4, i5
+  complex(fltknd) :: rslt
+  integer :: ii
+  rslt = obj%Q(i1)%sqrL *obj%Q(i3)%k * obj%Q(i4)%k *obj%Q(i5)%k * obj%Q(i2)%Rang
   end function
 
   function list_sqr_lkl( obj ,i1 ,i3,i4, i5 ,i2 ) result(rslt)

@@ -190,7 +190,7 @@ endif
   associate( Ntot=>glob(id)%Ntot ,Noff=>glob(id)%Noff ,NZ=>glob(id)%NZ)
   Noff2 = Noff+1
   do ii=1,Noff
-    call glob(id)%Q(ii)%fill( momenta(0:3,ii) ,directions(0:3,ii) )
+    call glob(id)%Q(ii)%fill( momenta(0:3,ii), directions(0:3,ii) )
   enddo
   do ii=Noff2,(Ntot-1)
     call glob(id)%Q(ii)%fill( momenta(0:3,ii) )
@@ -202,7 +202,7 @@ endif
   enddo
 
   !build polarization vectors
-  sqrt_S = 13000.
+  sqrt_S = 14000.
   P1 = [sqrt_S/2., 0._fltknd, 0._fltknd, sqrt_S/2.]
   P2 = [sqrt_S/2., 0._fltknd, 0._fltknd,-sqrt_S/2.]
   q(0:3) = momenta(0:3,Ntot)
@@ -215,18 +215,31 @@ endif
   Pp_wave = Pp - mom_dot(q, Pp)/M_sq*q(0:3)
   ap = mom_dot(q, Pp)
   am =-mom_dot(q, Pm)
+!  X = (-M**2*(ap*Pp_wave + am*Pm_wave)+(q(1)**2 + q(2)**2)*(am*Pp_wave + ap*Pm_wave))/&
+!        (sqrt(q(1)**2 + q(2)**2)*MT**2*sqrt_S**2)
+!  Z = M*(Pp_wave+Pm_wave)/(ap-am)
+ Y(0) = P1(1)*P2(2)*q(3) + P1(2)*P2(3)*q(1) + P1(3)*P2(1)*q(2) &
+      - P1(1)*P2(3)*q(2) - P1(2)*P2(1)*q(3) - P1(3)*P2(2)*q(1)
+ Y(1) = P1(0)*P2(3)*q(2) + P1(2)*P2(0)*q(3) + P1(3)*P2(2)*q(0) &
+      - P1(0)*P2(2)*q(3) - P1(2)*P2(3)*q(0) - P1(3)*P2(0)*q(2)
+ Y(2) = P1(0)*P2(1)*q(3) + P1(1)*P2(3)*q(0) + P1(3)*P2(0)*q(1) &
+      - P1(0)*P2(3)*q(1) - P1(1)*P2(0)*q(3) + P1(3)*P2(1)*q(0)
+ Y(3) = P1(0)*P2(2)*q(1) + P1(1)*P2(0)*q(2) + P1(2)*P2(1)*q(0) &
+      - P1(0)*P2(1)*q(2) - P1(1)*P2(2)*q(0) - P1(2)*P2(0)*q(1)
+ Y(0:3) = 1/(sqrt(q(1)**2 + q(2)**2))*[0._fltknd,-q(2), q(1), 0._fltknd]
+
   X = -sqrt(M_sq)/((sqrt_S**2)*sqrt(q(1)**2 + q(2)**2)*MT) &
     *(ap*Pp_wave + am*Pm_wave)
   Z = 1/(sqrt_S**2 * MT)*(am*Pp_wave + ap*Pm_wave)
-  Y(0) = X(1)*Z(2)*q(3) + X(2)*Z(3)*q(1) + X(3)*Z(1)*q(2) &
-       - X(1)*Z(3)*q(2) - X(2)*Z(1)*q(3) - X(3)*Z(2)*q(1)
-  Y(1) = X(0)*Z(3)*q(2) + X(2)*Z(0)*q(3) + X(3)*Z(2)*q(0) &
-       - X(0)*Z(2)*q(3) - X(2)*Z(3)*q(0) - X(3)*Z(0)*q(2)
-  Y(2) = X(0)*Z(1)*q(3) + X(1)*Z(3)*q(0) + X(3)*Z(0)*q(1) &
-       - X(0)*Z(3)*q(1) - X(1)*Z(0)*q(3) + X(3)*Z(1)*q(0)
-  Y(3) = X(0)*Z(2)*q(1) + X(1)*Z(0)*q(2) + X(2)*Z(1)*q(0) &
-       - X(0)*Z(1)*q(2) - X(1)*Z(2)*q(0) - X(2)*Z(0)*q(1)
-  Y(0:3) = Y(0:3)/M
+! Y(0) = X(1)*Z(2)*q(3) + X(2)*Z(3)*q(1) + X(3)*Z(1)*q(2) &
+!      - X(1)*Z(3)*q(2) - X(2)*Z(1)*q(3) - X(3)*Z(2)*q(1)
+! Y(1) = X(0)*Z(3)*q(2) + X(2)*Z(0)*q(3) + X(3)*Z(2)*q(0) &
+!      - X(0)*Z(2)*q(3) - X(2)*Z(3)*q(0) - X(3)*Z(0)*q(2)
+! Y(2) = X(0)*Z(1)*q(3) + X(1)*Z(3)*q(0) + X(3)*Z(0)*q(1) &
+!      - X(0)*Z(3)*q(1) - X(1)*Z(0)*q(3) + X(3)*Z(1)*q(0)
+! Y(3) = X(0)*Z(2)*q(1) + X(1)*Z(0)*q(2) + X(2)*Z(1)*q(0) &
+!      - X(0)*Z(1)*q(2) - X(1)*Z(2)*q(0) - X(2)*Z(0)*q(1)
+! Y(0:3) = Y(0:3)/M
 
   call glob(id)%Q(Ntot+1)%fill( X ,directions(0:3,Ntot) )
   call glob(id)%Q(Ntot+2)%fill( Y ,directions(0:3,Ntot) )

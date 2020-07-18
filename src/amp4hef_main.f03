@@ -201,6 +201,8 @@ endif
     glob(id)%Q(ii)%kapp = glob(id)%ang(Noff2,ii,ii)/glob(id)%ang(Noff2,ii)
   enddo
 
+  ! when there is a Z boson whch is massive we need to build additional polarization vectors
+  if(NZ.eq.1) then
   !build polarization vectors
   sqrt_S = 14000.
   P1 = [sqrt_S/2., 0._fltknd, 0._fltknd, sqrt_S/2.]
@@ -228,23 +230,15 @@ endif
       - P1(0)*P2(1)*q(2) - P1(1)*P2(2)*q(0) - P1(2)*P2(0)*q(1)
  Y(0:3) = 1/(sqrt(q(1)**2 + q(2)**2))*[0._fltknd,-q(2), q(1), 0._fltknd]
 
+  ! Collins Sopper frame
   X = -sqrt(M_sq)/((sqrt_S**2)*sqrt(q(1)**2 + q(2)**2)*MT) &
     *(ap*Pp_wave + am*Pm_wave)
   Z = 1/(sqrt_S**2 * MT)*(am*Pp_wave + ap*Pm_wave)
-! Y(0) = X(1)*Z(2)*q(3) + X(2)*Z(3)*q(1) + X(3)*Z(1)*q(2) &
-!      - X(1)*Z(3)*q(2) - X(2)*Z(1)*q(3) - X(3)*Z(2)*q(1)
-! Y(1) = X(0)*Z(3)*q(2) + X(2)*Z(0)*q(3) + X(3)*Z(2)*q(0) &
-!      - X(0)*Z(2)*q(3) - X(2)*Z(3)*q(0) - X(3)*Z(0)*q(2)
-! Y(2) = X(0)*Z(1)*q(3) + X(1)*Z(3)*q(0) + X(3)*Z(0)*q(1) &
-!      - X(0)*Z(3)*q(1) - X(1)*Z(0)*q(3) + X(3)*Z(1)*q(0)
-! Y(3) = X(0)*Z(2)*q(1) + X(1)*Z(0)*q(2) + X(2)*Z(1)*q(0) &
-!      - X(0)*Z(1)*q(2) - X(1)*Z(2)*q(0) - X(2)*Z(0)*q(1)
-! Y(0:3) = Y(0:3)/M
 
   call glob(id)%Q(Ntot+1)%fill( X ,directions(0:3,Ntot) )
   call glob(id)%Q(Ntot+2)%fill( Y ,directions(0:3,Ntot) )
   call glob(id)%Q(Ntot+3)%fill( Z ,directions(0:3,Ntot) )
-
+  endif
   end associate
   contains
   function mom_dot(m1, m2)  result(rslt)

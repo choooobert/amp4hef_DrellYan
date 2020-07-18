@@ -114,7 +114,8 @@ contains
 !    write(*,*) "algebr ", -2/z*M+ MT**2/(z*M)
 
 !AI0**2
-    write(*,*) "algebr ", -xq**2*S**2/D2**2*(1-z)*MT**2/M*qTabs*(-1-2*z)
+    write(*,*) "algebr ", -xq**2*s**2*(1-z)*(z**2*(kTqT+kTabs**2*qTabs**2/M**2 ) &
+                        +MT**2/M**2*(qTabs**2-2*z*kTqT))/(D1*D2)
 
 !AI+**2
 !    write(*,*) "algebr ", -xq*S*(4*kTY**2+MT**2/(M**2*qTabs**2)*4*kTqT**2 &

@@ -4,7 +4,7 @@ module amp4hef_DrellYan
   use amp4hef_qomentum
   implicit none
   private
-  public :: fill_matrices_DrellYan,matrix_element_DrellYan ,amplitude_DrellYan ,all_amplitudes_DrellYan
+  public :: fill_matrices_DrellYan,matrix_element_DrellYan ,amplitude_DrellYan ,all_amplitudes_DrellYan, impact_factors_all
 
   real, parameter :: sqrt_2 = 1.41421356237_fltknd
   real(fltknd) :: MZ
@@ -15,42 +15,84 @@ module amp4hef_DrellYan
 
   integer,parameter :: gluon=0 ,quark=1 ,antiq=-1, Zboson=2
      integer,parameter :: helTable_DrellYan(3,6)=reshape(&
-     [ -1,1,-1,  -1, 1, 0,  -1, 1, 1,&
-       1,-1,-1,   1,-1, 0,   1,-1, 1 &
+     [-1, 1,-1,  -1, 1, 1,   -1, 1, 0,&
+       1,-1, 1,   1,-1,-1,    1,-1, 0 &
      ], [3,6])
 
   integer,allocatable,save :: mtx_4_sqr(:,:)
 
 contains
 
-  function matrix_element_DrellYan(Tin) result(rslt)
-  class(qomentum_list_type),intent(in) :: Tin
-  real(fltknd) :: rslt
+  function impact_factors_all(Tin) result(rslt)
+      class(qomentum_list_type),intent(in) :: Tin
+      real(fltknd) :: rslt(9)
   complex(fltknd) :: amp(12, 2)
-  integer :: ii,NhelSum,Nminus2, NhelConf, Nperm, jj,kk
+  integer :: ii,Nminus2, NhelConf, Nperm, jj,kk
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff )
 
     MZ_sq = square(Tin%Q(Ntot)%k)
     MZ    = sqrt(MZ_sq)
 
-    NhelConf = 6
-    NhelSum = 3
+    if((MZ.lt.1E-3).and.(MZ.gt.-1E-3)) then
+      NhelConf = 4
+      rslt(5:9) = [0, 0, 0, 0, 0]
+    else
+      NhelConf = 6
+    endif
+
     if(Ntot.eq.5) then
         NPerm = 2
     else if(Ntot.eq.4) then
         NPerm = 1
     end if
 
-  rslt = 0
+    rslt = 0
     do ii=1, (NhelConf/2)
       do jj=1, Nperm
           amp(ii, jj) = amplitude_DrellYan(Tin ,helTable_DrellYan(:,ii), perTable(1:NPerm, jj))
       enddo
-    rslt = rslt + colorSum(Ntot, amp(ii,:))
   enddo
-!  do ii=1, Noff
-!    rslt=rslt*(Tin%Q(ii)%kapp*Tin%Q(ii)%kstr)
-!  enddo
+
+  kk =1
+  do ii=1, (Nhelconf/2)
+    do jj=1, (Nhelconf/2)
+      rslt(kk) = 2*colorSum(Ntot, amp(ii,:), amp(jj,:))
+    enddo
+  enddo
+  end associate
+  end function
+
+
+
+  function matrix_element_DrellYan(Tin) result(rslt)
+  class(qomentum_list_type),intent(in) :: Tin
+  real(fltknd) :: rslt
+  complex(fltknd) :: amp(12, 2)
+  integer :: ii,Nminus2, NhelConf, Nperm, jj,kk
+  associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff )
+
+    MZ_sq = square(Tin%Q(Ntot)%k)
+    MZ    = sqrt(MZ_sq)
+
+    if((MZ.lt.1E-3).and.(MZ.gt.-1E-3)) then
+      NhelConf =4
+    else
+      NhelConf = 6
+    endif
+
+    if(Ntot.eq.5) then
+        NPerm = 2
+    else if(Ntot.eq.4) then
+        NPerm = 1
+    end if
+
+    rslt = 0
+    do ii=1, (NhelConf/2)
+      do jj=1, Nperm
+          amp(ii, jj) = amplitude_DrellYan(Tin ,helTable_DrellYan(:,ii), perTable(1:NPerm, jj))
+      enddo
+    rslt = rslt + colorSum(Ntot, amp(ii,:), amp(ii,:))
+  enddo
   rslt = 2*rslt
   end associate
   end function 
@@ -96,37 +138,36 @@ contains
     iY = Ntot + 2
     iZ = Ntot + 3
     if(Ntot.eq.5) then
+
+    if (helicity(j3).ne.0) then
+      rslt_X =  amp_202(Tin, perm, iX) + amp_205(Tin, perm, iX) + amp_208(Tin, perm, iX) &
+              + amp_211(Tin, perm, iX)+  amp_214(Tin, perm, iX)
+      rslt_Y =  amp_202(Tin, perm, iY) + amp_205(Tin, perm, iY) + amp_208(Tin, perm, iY) &
+              + amp_211(Tin, perm, iY)+  amp_214(Tin, perm, iY)
       if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.-1) then
-      rslt_X =  amp_202(Tin, perm, iX) + amp_205(Tin, perm, iX) + amp_208(Tin, perm, iX) &
-              + amp_211(Tin, perm, iX)+  amp_214(Tin, perm, iX)
-      rslt_Y =  amp_202(Tin, perm, iY) + amp_205(Tin, perm, iY) + amp_208(Tin, perm, iY) &
-              + amp_211(Tin, perm, iY)+  amp_214(Tin, perm, iY)
-      rslt = (rslt_X - i*rslt_Y)/sqrt_2
-      else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.0) then
-        rslt =  amp_202(Tin, perm, iZ) + amp_205(Tin, perm, iZ) + amp_208(Tin, perm, iZ) &
-              + amp_211(Tin, perm, iZ)+  amp_214(Tin, perm, iZ)
+        rslt = (rslt_X - i*rslt_Y)/sqrt_2
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.1) then
-      rslt_X =  amp_202(Tin, perm, iX) + amp_205(Tin, perm, iX) + amp_208(Tin, perm, iX) &
-              + amp_211(Tin, perm, iX)+  amp_214(Tin, perm, iX)
-      rslt_Y =  amp_202(Tin, perm, iY) + amp_205(Tin, perm, iY) + amp_208(Tin, perm, iY) &
-              + amp_211(Tin, perm, iY)+  amp_214(Tin, perm, iY)
-      rslt = -(rslt_X + i*rslt_Y)/sqrt_2
-      end if
+        rslt = -(rslt_X + i*rslt_Y)/sqrt_2
+      endif
+    else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.0) then
+      rslt =  amp_202(Tin, perm, iZ) + amp_205(Tin, perm, iZ) + amp_208(Tin, perm, iZ) &
+            + amp_211(Tin, perm, iZ)+  amp_214(Tin, perm, iZ)
+    end if
 
     else if(Ntot.eq.4) then
       if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.-1) then
-!        rslt_X = amp_102(Tin, iX)
-!        rslt_Y = amp_102(Tin, iY)
-!        rslt = (rslt_X - i*rslt_Y)/sqrt_2
+        rslt_X = amp_102(Tin, iX)
+        rslt_Y = amp_102(Tin, iY)
+        rslt = (rslt_X - i*rslt_Y)/sqrt_2
 !        write(*,*) rslt_X, rslt_Y
 
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.0) then
         rslt = amp_102(Tin, iZ)
 
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.1) then
-!        rslt_X = amp_102(Tin, iX)
-!        rslt_Y = amp_102(Tin, iY)
-!        rslt = -(rslt_X + i*rslt_Y)/sqrt_2
+        rslt_X = amp_102(Tin, iX)
+        rslt_Y = amp_102(Tin, iY)
+        rslt = -(rslt_X + i*rslt_Y)/sqrt_2
 !        write(*,*) rslt_X, rslt_Y
       end if
     end if
@@ -155,15 +196,12 @@ end function
     l2 = square(T%Q(i3)%k) + twodot(T%Q(i2)%p, T%Q(i3)%k)
 
     l1 = -square(T%Q(i3)%k) - twodot(T%Q(i4)%p, T%Q(i3)%k)
-    r3= -T%sqr(i4, X, [i3, i4], i1)*T%ang(i1, i2)
-    r4= -T%sqr(i4, Y, [i3, i4], i1)*T%ang(i1, i2)
-    r5= -T%sqr(i4, Z, [i3, i4], i1)*T%ang(i1, i2)
-    r6 = T%sqr(i4, i1)*T%ang(i1, [i2, i3], Y, i2)
-    r7 = T%sqr(i4, i1)*T%ang(i1, [i2, i3], Y, i2)
-    r8 = T%sqr(i4, i1)*T%ang(i1, [i2, i3], Z, i2)
+    r3 = T%sqr(i4, X,[i3,i4], Z, i4)
+    r4 = T%sqr(i4, Z,[i3,i4], X, i4)
+
+    r5 = T%ang(i1, i2, X, [i2, i3], i1)
+    r6 = T%ang(i1, i2, Z, [i2, i3], i1)
     rslt = r3/l1+r4/l2
-    write(*,*) "spinor ", r6*conjg(r4)/l2**2
-    write(*,*) "spinor ", r4*conjg(r6)/l2**2
 
 end function
 
@@ -317,9 +355,9 @@ end function
   end subroutine
 
 
-function colorSum( Ntot ,t ) result(rslt)
+function colorSum( Ntot ,t, u ) result(rslt)
   integer,intent(in) :: Ntot
-  complex(fltknd),intent(in) :: t(2)
+  complex(fltknd),intent(in) :: t(2), u(2)
   complex(fltknd) :: rslt ,z(2), uu, vv
   integer :: Nadj,i
 !
@@ -327,9 +365,9 @@ function colorSum( Ntot ,t ) result(rslt)
 !
   select case (Ntot)
   case (4)
-    rslt = t(1)*conjg(t(1)) * Nadj
+    rslt = t(1)*conjg(u(1)) * Nadj
   case (5)
-    z(1:2) = conjg(t(1:2))
+    z = conjg(u(1:2))
     uu = z(1)*t(1) + z(2)*t(2)
     vv =-z(1)*t(2) - z(2)*t(1)
     rslt = ( vv + Nadj*uu ) * Nadj/Ncolor(1)

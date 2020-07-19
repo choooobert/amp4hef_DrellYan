@@ -75,7 +75,7 @@ contains
     MZ    = sqrt(MZ_sq)
 
     if((MZ.lt.1E-3).and.(MZ.gt.-1E-3)) then
-      NhelConf =4
+      NhelConf = 4
     else
       NhelConf = 6
     endif
@@ -130,6 +130,8 @@ contains
   integer ::  i2, i3, i4, j2, j3, j4, iX, iY, iZ
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff ,offshell=>Tin%offshell )
     !
+    MZ_sq = square(Tin%Q(Ntot)%k)
+    MZ    = sqrt(MZ_sq)
     i = (0._fltknd,1._fltknd)
     rslt = 0
     j2=1 ;j3=3; j4=2 ! indexing for helicity configuration
@@ -140,47 +142,58 @@ contains
     if(Ntot.eq.5) then
 
     if (helicity(j3).ne.0) then
-      rslt_X =  amp_202(Tin, perm, iX) + amp_205(Tin, perm, iX) + amp_208(Tin, perm, iX) &
-              + amp_211(Tin, perm, iX)+  amp_214(Tin, perm, iX)
-      rslt_Y =  amp_202(Tin, perm, iY) + amp_205(Tin, perm, iY) + amp_208(Tin, perm, iY) &
-              + amp_211(Tin, perm, iY)+  amp_214(Tin, perm, iY)
+      rslt_X =  amp_2jet_1(Tin, perm, iX) + amp_2jet_2(Tin, perm, iX) + amp_2jet_3(Tin, perm, iX) &
+              + amp_2jet_7(Tin, perm, iX)+  amp_2jet_8(Tin, perm, iX)
+      rslt_Y =  amp_2jet_1(Tin, perm, iY) + amp_2jet_2(Tin, perm, iY) + amp_2jet_3(Tin, perm, iY) &
+              + amp_2jet_7(Tin, perm, iY)+  amp_2jet_8(Tin, perm, iY)
       if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.-1) then
-        rslt = (rslt_X - i*rslt_Y)/sqrt_2
+        if((MZ.lt.1E-3).and.(MZ.gt.-1E-3)) then
+          rslt = amp_2jet_1m(tin, perm) + amp_2jet_2m(tin, perm) + amp_2jet_7m(Tin, perm)
+        else
+          rslt = (rslt_X - i*rslt_Y)/sqrt_2
+        endif
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.1) then
-        rslt = -(rslt_X + i*rslt_Y)/sqrt_2
+        if((MZ.lt.1E-3).and.(MZ.gt.-1E-3)) then
+          rslt = amp_2jet_1p(tin, perm) + amp_2jet_3p(tin, perm) + amp_2jet_8p(Tin, perm)
+        else
+          rslt = -(rslt_X + i*rslt_Y)/sqrt_2
+        endif
       endif
     else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.0) then
-      rslt =  amp_202(Tin, perm, iZ) + amp_205(Tin, perm, iZ) + amp_208(Tin, perm, iZ) &
-            + amp_211(Tin, perm, iZ)+  amp_214(Tin, perm, iZ)
+      rslt =  amp_2jet_1(Tin, perm, iZ) + amp_2jet_2(Tin, perm, iZ) + amp_2jet_3(Tin, perm, iZ) &
+            + amp_2jet_7(Tin, perm, iZ)+  amp_2jet_8(Tin, perm, iZ)
     end if
 
     else if(Ntot.eq.4) then
+    if (helicity(j3).ne.0) then
+      rslt_X =  amp_1jet(Tin, iX)
+      rslt_Y =  amp_1jet(Tin, iY)
       if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.-1) then
-        rslt_X = amp_102(Tin, iX)
-        rslt_Y = amp_102(Tin, iY)
-        rslt = (rslt_X - i*rslt_Y)/sqrt_2
-!        write(*,*) rslt_X, rslt_Y
-
-      else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.0) then
-        rslt = amp_102(Tin, iZ)
-
+        if((MZ.lt.1E-3).and.(MZ.gt.-1E-3)) then
+          rslt = amp_1jet_m(Tin)
+        else
+          rslt = (rslt_X - i*rslt_Y)/sqrt_2
+        endif
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.1) then
-        rslt_X = amp_102(Tin, iX)
-        rslt_Y = amp_102(Tin, iY)
-        rslt = -(rslt_X + i*rslt_Y)/sqrt_2
-!        write(*,*) rslt_X, rslt_Y
-      end if
+        if((MZ.lt.1E-3).and.(MZ.gt.-1E-3)) then
+          rslt = amp_1jet_p(Tin)
+        else
+          rslt = -(rslt_X + i*rslt_Y)/sqrt_2
+        endif
+      endif
+    else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.0) then
+      rslt =  amp_1jet(Tin, iZ)
+    end if
+
     end if
 
 
   end associate
 end function
 
-!! !amplitudes for 1-jet process
+!!!! amplitudes for 1-jet process
 
-
-
-    function amp_102(T, Z) result(rslt)
+    function amp_1jet(T, Z) result(rslt)
     type(qomentum_list_type),intent(in) :: T
     integer, intent(in) :: Z
     complex(fltknd) :: rslt,vv ,xx,yy, zz, r1, r2, l2
@@ -202,29 +215,86 @@ end function
     r5 = T%ang(i1, i2, X, [i2, i3], i1)
     r6 = T%ang(i1, i2, Z, [i2, i3], i1)
     rslt = r3/l1+r4/l2
+    end function
 
-end function
+    function amp_1jet_m(T) result(rslt)
+    type(qomentum_list_type),intent(in) :: T
+    complex(fltknd) :: rslt,vv ,xx,yy, zz
+    integer :: i1, i2, i3, i4
+    !
+    i1=1 ;i2=2 ;i3=4; i4=3
+    !
+    rslt = 0
+    vv =T%sqr(i4,i1)*T%sqr(i4,i1)*T%ang(i3,i2)*T%Q(i1)%kstr
+    yy = (MZ_sq+T%ang(i2,i3,i2))*T%sqr(i4,i3)
+    rslt = 2*vv/yy
+    end function
 
 
 
-!!!!! amplitudes for 2-jet process
-!
-!   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!   ! 1st diagram amplitudes
-!   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    function amp_1jet_p(T) result(rslt)
+    type(qomentum_list_type),intent(in) :: T
+    complex(fltknd) :: rslt,vv ,xx,yy, zz
+    integer :: i1, i2, i3, i4
+    !
+    i1=1 ;i2=2 ;i3=4; i4=3
+    !
+    rslt = 0
+    call T%set_direction(i3,i2)
+    vv =T%ang(i2,i1)*T%ang(i2,i1)*T%sqr(i3,i4)*T%Q(i1)%kapp
+    yy = (MZ_sq+T%ang(i4,i3,i4))*T%ang(i2,i3)
+    rslt = 2*vv/yy
+    end function
 
-    function amp_202(T, perm, U) result(rslt)
+!!!! amplitudes for 2-jet process
+
+   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   ! 1st diagram amplitudes
+   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    function amp_2jet_1(T, perm, U) result(rslt)
     type(qomentum_list_type),intent(in) :: T
     integer, intent(in) :: perm(:), U
     complex(fltknd) :: rslt, xx, zz
     integer :: i1, i2, i3, i4, i5
     !
-    i1=perm(2) ;i2=4 ;i3=5; i4=3; i5=perm(1)
+    i2=perm(2) ;i5=4 ;i3=5; i4=3; i1=perm(1)
     !
     rslt = 0
-    xx = T%sqr(i4,i5)*T%ang(i5,[i5,i4],U,[i1,i2], i1)* T%ang(i1,i2)
-    zz = (square(T%Q(i1)%k)+T%ang(i2,i1,i2))*(square(T%Q(i5)%k)+T%ang(i4,i5,i4))
+    xx = T%sqr(i5,i1)*T%ang(i1,[i1,i5],U,[i2,i4], i2)* T%ang(i2,i4)
+    zz = (square(T%Q(i2)%k)+T%ang(i4,i2,i4))*(square(T%Q(i1)%k)+T%ang(i5,i1,i5))
     rslt = -xx/zz
+    end function
+
+    function amp_2jet_1m(T, perm) result(rslt)
+    type(qomentum_list_type),intent(in) :: T
+    complex(fltknd) :: rslt,xx,yy,zz
+    integer :: i1, i2, i3, i4, i5
+    integer, intent(in) :: perm(:)
+    !
+    i2=perm(2) ;i5=4 ;i3=5; i4=3; i1=perm(1)
+    !
+    rslt = 0
+    xx= T%sqr(i1,i5)*T%sqr(i1,i5)* T%ang(i2,i4)/T%sqr(i5,i3)*T%Q(i1)%kstr
+    yy = T%Q(i2)%kapp*T%ang(i3,i2) + T%ang(i3,i4)*T%sqr(i4,i2)
+    zz = (square(T%Q(i1)%k)+T%ang(i5,i1,i5))*(square(T%Q(i2)%k)+T%ang(i4,i2,i4))
+    rslt = xx*yy/zz
+    end function
+
+
+    function amp_2jet_1p(T, perm) result(rslt)
+    type(qomentum_list_type),intent(in) :: T
+    integer, intent(in) :: perm(:)
+    complex(fltknd) :: rslt,xx,yy,zz
+    integer :: i1, i2, i3, i4, i5
+    !
+    i2=perm(2) ;i5=4 ;i3=5; i4=3; i1=perm(1)
+    !
+    rslt = 0
+    xx = T%sqr(i5,i1)*T%ang(i2,i4)*T%ang(i2,i4)*T%Q(i2)%kapp/T%ang(i4,i3)
+    yy = T%Q(i1)%kstr*T%sqr(i1,i3)+T%ang(i1,i5)*T%sqr(i5,i3)
+    zz = (square(T%Q(i1)%k)+T%ang(i5,i1,i5))*(square(T%Q(i2)%k)+T%ang(i4,i2,i4))
+    rslt = xx*yy/zz
     end function
 
 !
@@ -233,18 +303,34 @@ end function
 !    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 
-    function amp_205(T, perm,U) result(rslt)
+    function amp_2jet_2(T, perm,U) result(rslt)
     type(qomentum_list_type),intent(in) :: T
     complex(fltknd) :: rslt,xx,yy,zz
     integer :: i1, i2, i3, i4, i5
     integer, intent(in) :: perm(:), U
     !
-    i1=perm(2) ;i2=4 ;i3=5; i4=3; i5=perm(1)
+    i2=perm(2) ;i5=4 ;i3=5; i4=3; i1=perm(1)
     !
     rslt = 0
-    xx = T%sqr(i4,i5)*T%ang(i5,[i5,i4],i1)*T%ang(i1,[i2,i3],U, i2)
-    zz = (MZ_sq+T%ang(i2,i3,i2))*(square(T%Q(i5)%k)+T%ang(i4,i5,i4))
+    xx = T%sqr(i5,i1)*T%ang(i1,[i1,i5],i2)*T%ang(i2,[i4,i3],U, i4)
+    zz = (MZ_sq+T%ang(i4,i3,i4))*(square(T%Q(i1)%k)+T%ang(i5,i1,i5))
     rslt = -xx/zz
+    end function
+
+    function amp_2jet_2m(T, perm) result(rslt)
+    type(qomentum_list_type),intent(in) :: T
+    complex(fltknd) :: rslt,xx,yy,zz, vv
+    integer :: i1, i2, i3, i4, i5
+    integer, intent(in) :: perm(:)
+    !
+    i2=perm(2) ;i5=4 ;i3=5; i4=3; i1=perm(1)
+    !
+    rslt = 0
+    vv = T%sqr(i1,i5)*T%ang(i3,i2)/T%sqr(i4, i3)
+    xx = T%Q(i1)%kstr*T%sqr(i1,i2) + T%ang(i1,i5)*T%sqr(i5,i2)
+    yy = T%ang(i2,i3) + T%ang(i2,i4)*T%sqr(i4,i5)/T%sqr(i3,i5)
+    zz = (square(T%Q(i1)%k)+T%ang(i5,i1,i5))
+    rslt = vv*xx*yy/zz
     end function
 
 !
@@ -253,49 +339,92 @@ end function
 !    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 
-    function amp_208(T, perm, U) result(rslt)
+    function amp_2jet_3(T, perm, U) result(rslt)
     type(qomentum_list_type),intent(in) :: T
     complex(fltknd) :: rslt,xx,yy,zz
     integer :: i1, i2, i3, i4, i5
     integer, intent(in) :: perm(:), U
     !
-    i1=perm(2) ;i2=4 ;i3=5; i4=3; i5=perm(1)
+    i2=perm(2) ;i5=4 ;i3=5; i4=3; i1=perm(1)
     !
     rslt = 0
-    xx = T%sqr(i4, U,[i3,i4], i5)*T%ang(i5,[i1,i2],i1) *T%ang(i1,i2)
-    zz = (square(T%Q(i1)%k)+T%ang(i2,i1,i2))*(MZ_sq+T%ang(i4,i3,i4))
+    xx = T%sqr(i5, U,[i3,i5], i1)*T%ang(i1,[i2,i4],i2) *T%ang(i2,i4)
+    zz = (square(T%Q(i2)%k)+T%ang(i4,i2,i4))*(MZ_sq+T%ang(i5,i3,i5))
     rslt = -xx/zz
     end function
 
+
+    function amp_2jet_3p(T, perm) result(rslt)
+    type(qomentum_list_type),intent(in) :: T
+    integer, intent(in) :: perm(:)
+    complex(fltknd) :: rslt,xx,yy,zz, vv
+    integer :: i1, i2, i3, i4, i5
+    !
+    i2=perm(2) ;i5=4 ;i3=5; i4=3; i1=perm(1)
+    !
+    rslt = 0
+    vv = T%ang(i2,i4)/T%ang(i5, i3)
+    xx = T%sqr(i3,i1) + T%ang(i2,i4)*T%sqr(i5,i1)/T%ang(i4,i3)
+    yy = T%Q(i2)%kapp*T%ang(i1,i2) + T%ang(i1,i4)*T%sqr(i4,i2)
+    zz = (square(T%Q(i2)%k)+T%ang(i4,i2,i4))
+    rslt = vv*xx*yy/zz
+    end function
 !
 !    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !    ! 7th diagram amplitudes
 !    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 
-    function amp_211(T, perm, U) result(rslt)
+    function amp_2jet_7(T, perm, U) result(rslt)
     type(qomentum_list_type),intent(in) :: T
     complex(fltknd) :: rslt,xx, uu,vv, bb, dd, ff, gg
     integer :: i1, i2, i3, i4, i5
     integer, intent(in) :: perm(:), U
     !
-    i1=perm(2) ;i2=4 ;i3=5; i4=3; i5=perm(1)
+    i2=perm(2) ;i5=4 ;i3=5; i4=3; i1=perm(1)
     !
     rslt = 0
-    xx = 1/((square(T%Q(i1)%k) +square(T%Q(i5)%k) +twodot(T%Q(i1)%k, T%Q(i5)%k))*(MZ_sq+T%ang(i2,i3,i2)))
-    uu =T%ang(i1,i5)*T%sqr(i5,i1)/2
-    vv = T%sqr(i4,i5,[i2,i3], U, i2) - T%sqr(i4,i1,[i2,i3], U, i2)
+    xx = 1/((square(T%Q(i2)%k) +square(T%Q(i1)%k) +twodot(T%Q(i2)%k, T%Q(i1)%k))*(MZ_sq+T%ang(i4,i3,i4)))
+    uu =T%ang(i2,i1)*T%sqr(i1,i2)/2
+    vv = T%sqr(i5,i1,[i4,i3], U, i4) - T%sqr(i5,i2,[i4,i3], U, i4)
 
-    bb = T%ang(i5,i1,i5)&
-       + T%ang(i1,i5)*T%sqr(i5,i1)*square(T%Q(i1)%k)/T%ang(i1,i5,i1)
-    dd = T%sqr(i4,i1)*T%ang(i1,[i2,i3], U, i2)
+    bb = T%ang(i1,i2,i1)&
+       + T%ang(i2,i1)*T%sqr(i1,i2)*square(T%Q(i2)%k)/T%ang(i2,i1,i2)
+    dd = T%sqr(i5,i2)*T%ang(i2,[i4,i3], U, i4)
 
-    ff = T%ang(i1,i5,i1)&
-       + T%ang(i1,i5)*T%sqr(i5,i1)*square(T%Q(i5)%k)/T%ang(i5,i1,i5)
-    gg = T%sqr(i4,i5)*T%ang(i5,[i2,i3], U, i2)
+    ff = T%ang(i2,i1,i2)&
+       + T%ang(i2,i1)*T%sqr(i1,i2)*square(T%Q(i1)%k)/T%ang(i1,i2,i1)
+    gg = T%sqr(i5,i1)*T%ang(i1,[i4,i3], U, i4)
 
     rslt = xx*(uu*vv + bb*dd - ff*gg)
     end function
+
+    function amp_2jet_7m(T, perm) result(rslt)
+    type(qomentum_list_type),intent(in) :: T
+    complex(fltknd) :: rslt,xx, uu,vv, bb, dd, ff, gg
+    integer :: i1, i2, i3, i4, i5
+    integer, intent(in) :: perm(:)
+    !
+    i2=perm(2) ;i5=4 ;i3=5; i4=3; i1=perm(1)
+    !
+    rslt = 0
+    xx = T%ang(i3,i4)/((MZ_sq+ T%ang(i4,i3,i4)+ T%ang(i5,i3,i5) &
+       + T%sqr(i4,i5)*T%ang(i5,i4))*(MZ_sq+T%ang(i4,i3,i4)))
+    uu = T%ang(i2,i1)*T%sqr(i1,i2)/(2*square(T%Q(i2)%k)*square(T%Q(i1)%k))
+    vv = (T%sqr(i5,i2,i3)-T%sqr(i5,i1,i3))&
+       + T%sqr(i4,i5)/T%sqr(i3,i5)*(T%sqr(i5,i2,i4)-T%sqr(i5,i1,i4))
+
+    bb = -T%ang(i1,i2,i1)/(square(T%Q(i2)%k)*square(T%Q(i1)%k))&
+    - T%ang(i2,i1)*T%sqr(i1,i2)/(T%ang(i2,i1,i2)*square(T%Q(i1)%k))
+    dd = T%sqr(i5,i2)*T%ang(i2,i3) + T%sqr(i5,i2)*T%ang(i2,i4)*T%sqr(i4,i5)/T%sqr(i3,i5)
+
+    ff = +T%ang(i2,i1,i2)/(square(T%Q(i2)%k)*square(T%Q(i1)%k))&
+    + T%ang(i2,i1)*T%sqr(i1,i2)/(T%ang(i1,i2,i1)*square(T%Q(i2)%k))
+    gg = T%sqr(i5,i1)*T%ang(i1,i3) + T%sqr(i5,i1)*T%ang(i1,i4)*T%sqr(i4,i5)/T%sqr(i3,i5)
+
+    rslt = xx*(uu*vv + bb*dd + ff*gg)*(T%Q(i1)%kapp*T%Q(i1)%kstr*T%Q(i2)%kapp*T%Q(i2)%kstr)
+    end function
+
 
 !
 !    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -304,7 +433,7 @@ end function
 !
 
 
-    function amp_214(T, perm, U) result(rslt)
+    function amp_2jet_8(T, perm, U) result(rslt)
     type(qomentum_list_type),intent(in) :: T
     complex(fltknd) :: rslt,xx, uu,vv, bb, dd, ff, gg
     integer :: i1, i2, i3, i4, i5
@@ -313,20 +442,47 @@ end function
     i1=perm(2) ;i2=4 ;i3=5; i4=3; i5=perm(1)
     !
     rslt = 0
-    xx = 1/((square(T%Q(i1)%k) +square(T%Q(i5)%k) +twodot(T%Q(i1)%k, T%Q(i5)%k))*(MZ_sq+T%ang(i4,i3,i4)))
-    uu = T%ang(i1,i5)*T%sqr(i5,i1)/2
-    vv = T%sqr(i4,U,[i3,i4], i1, i2) - T%sqr(i4,U,[i3,i4], i5, i2)
+    xx = 1/((square(T%Q(i2)%k) +square(T%Q(i1)%k) +twodot(T%Q(i2)%k, T%Q(i1)%k))*(MZ_sq+T%ang(i5,i3,i5)))
+    uu = T%ang(i2,i1)*T%sqr(i1,i2)/2
+    vv = T%sqr(i5,U,[i3,i5], i2, i4) - T%sqr(i5,U,[i3,i5], i1, i4)
 
-    bb = T%ang(i5,i1,i5)&
-       + T%ang(i1,i5)*T%sqr(i5,i1)*square(T%Q(i1)%k)/T%ang(i1,i5,i1)
-    dd = T%sqr(i4,U,[i3,i4], i1)*T%ang(i1, i2)
+    bb = T%ang(i1,i2,i1)&
+       + T%ang(i2,i1)*T%sqr(i1,i2)*square(T%Q(i2)%k)/T%ang(i2,i1,i2)
+    dd = T%sqr(i5,U,[i3,i5], i2)*T%ang(i2, i4)
 
-    ff = T%ang(i1,i5,i1)&
-       + T%ang(i1,i5)*T%sqr(i5,i1)*square(T%Q(i5)%k)/T%ang(i5,i1,i5)
-    gg = T%sqr(i4,U,[i3,i4], i5)*T%ang(i5, i2)
+    ff = T%ang(i2,i1,i2)&
+       + T%ang(i2,i1)*T%sqr(i1,i2)*square(T%Q(i1)%k)/T%ang(i1,i2,i1)
+    gg = T%sqr(i5,U,[i3,i5], i1)*T%ang(i1, i4)
 
     rslt =xx*(uu*vv - bb*dd + ff*gg)
     end function
+
+  function amp_2jet_8p(T, perm) result(rslt)
+    type(qomentum_list_type),intent(in) :: T
+    complex(fltknd) :: rslt,xx, uu,vv, bb, dd, ff, gg
+    integer :: i1, i2, i3, i4, i5
+    integer, intent(in) :: perm(:)
+    !
+    i1=perm(2) ;i2=4 ;i3=5; i4=3; i5=perm(1)
+    !
+    rslt = 0
+    xx = T%sqr(i5,i3)/((MZ_sq+ T%ang(i4,i3,i4)+ T%ang(i5,i3,i5) &
+       + T%sqr(i4,i5)*T%ang(i5,i4))*(MZ_sq+T%ang(i5,i3,i5)))
+    uu = T%ang(i2,i1)*T%sqr(i1,i2)/(2*square(T%Q(i2)%k)*square(T%Q(i1)%k))
+    vv = (T%sqr(i3,i2,i4)-T%sqr(i3,i1,i4))&
+       + T%ang(i4,i5)/T%ang(i4,i3)*(T%sqr(i5,i2,i4)-T%sqr(i5,i1,i4))
+    bb = -T%ang(i1,i2,i1)/(square(T%Q(i2)%k)*square(T%Q(i1)%k))&
+    - T%ang(i2,i1)*T%sqr(i1,i2)/(T%ang(i2,i1,i2)*square(T%Q(i1)%k))
+    dd = T%sqr(i3,i2)*T%ang(i2,i4) + T%sqr(i5,i2)*T%ang(i2,i4)*T%ang(i4,i5)/T%ang(i4,i3)
+
+    ff = T%ang(i2,i1,i2)/(square(T%Q(i2)%k)*square(T%Q(i1)%k))&
+    + T%ang(i2,i1)*T%sqr(i1,i2)/(T%ang(i1,i2,i1)*square(T%Q(i2)%k))
+    gg = T%sqr(i3,i1)*T%ang(i1,i4) + T%sqr(i5,i1)*T%ang(i1,i4)*T%ang(i4,i5)/T%ang(i4,i3)
+
+    rslt = xx*(uu*vv + bb*dd + ff*gg)*(T%Q(i2)%kapp*T%Q(i2)%kstr*T%Q(i1)%kapp*T%Q(i1)%kstr)
+    end function
+
+
 
   subroutine fill_matrices_DrellYan
   integer :: rUnit
@@ -374,264 +530,5 @@ function colorSum( Ntot ,t, u ) result(rslt)
   end select
 end function
 
-
 end module
-
-!    function amp_101(T) result(rslt)
-!    type(qomentum_list_type),intent(in) :: T
-!    complex(fltknd) :: rslt,vv ,xx,yy, zz
-!    integer :: i1, i2, i3, i4
-!    !
-!    i1=1 ;i2=2 ;i3=4; i4=3
-!    !
-!    rslt = 0
-!    call T%set_direction(i3,i4)
-!    vv =T%sqr(i4,i1)*T%sqr(i4,i1)*T%ang(i3,i2)
-!    yy = (MZ_sq+T%ang(i2,i3,i2))*T%Q(i1)%kapp*T%sqr(i4,i3)
-!    rslt = 2*vv/yy
-!    end function
-!
-!    function amp_102(T) result(rslt)
-!    type(qomentum_list_type),intent(in) :: T
-!    complex(fltknd) :: rslt,vv ,xx,yy, zz
-!    integer :: i1, i2, i3, i4, Z
-!    !
-!    i1=1 ;i2=2 ;i3=4; i4=3; Z=5
-!    !
-!    rslt = 0
-!    call T%set_direction(i3,i1)
-!    xx = T%sqr(i4, Z, [i3, i4], i1)*T%ang(i1,i2)
-!    yy = T%sqr(i4,i1)*T%ang(i1,[i3,i2], Z, i2)
-!    vv = square(T%Q(i3)%k) + T%ang(i4,i3,i4)
-!    zz = square(T%Q(i3)%k) + T%ang(i2,i3,i2)
-!    rslt = xx/vv - yy/zz
-!    end function
-!
-!
-!    function amp_103(T) result(rslt)
-!    type(qomentum_list_type),intent(in) :: T
-!    complex(fltknd) :: rslt,vv ,xx,yy, zz
-!    integer :: i1, i2, i3, i4
-!    !
-!    i1=1 ;i2=2 ;i3=4; i4=3
-!    !
-!    rslt = 0
-!    call T%set_direction(i3,i2)
-!    vv =T%ang(i2,i1)*T%ang(i2,i1)*T%sqr(i3,i4)
-!    yy = (MZ_sq+T%ang(i4,i3,i4))*T%Q(i1)%kstr*T%ang(i2,i3)
-!    rslt = 2*vv/yy
-!    end function
-
-
-
-
-!
-!    function amp_201(T, perm) result(rslt)
-!    type(qomentum_list_type),intent(in) :: T
-!    complex(fltknd) :: rslt,xx,yy,zz
-!    integer :: i1, i2, i3, i4, i5
-!    integer, intent(in) :: perm(:)
-!    !
-!    i1=perm(2) ;i2=4 ;i3=5; i4=3; i5=perm(1)
-!    !
-!    rslt = 0
-!    xx= T%sqr(i4,i5)*T%sqr(i4,i5)* T%ang(i1,i2)/T%sqr(i4,i3)
-!    yy = T%ang(i3,i1) + T%ang(i3,i2)*T%sqr(i2,i1)/ T%Q(i1)%kapp
-!    zz = (square(T%Q(i1)%k)+T%ang(i2,i1,i2))*(square(T%Q(i5)%k)+T%ang(i4,i5,i4))*T%Q(i1)%kstr*T%Q(i5)%kapp
-!    rslt = xx*yy/zz
-!    end function
-!!
-!   function amp_202(T, perm) result(rslt)
-!   type(qomentum_list_type),intent(in) :: T
-!   integer, intent(in) :: perm(:)
-!   complex(fltknd) :: rslt,tt,uu,vv,xx,ww,yy,zz
-!   integer :: i1, i2, i3, i4, i5
-!    !
-!    i1=2 ;i2=4 ;i3=5; i4=3; i5=1
-!    !
-!   rslt = 0
-!   call T%set_direction(i3, i4)
-!   tt = T%sqr(i4,i5)*T%ang(i1,i2)
-!   uu = (-T%Q(i1)%kapp*T%Q(i1)%kstr+T%ang(i2,i1,i2))*(-T%Q(i5)%kapp*T%Q(i5)%kstr+T%ang(i4,i5,i4))*T%Q(i1)%kstr*T%Q(i5)%kapp
-!   ww = T%sqr(i5,i3) + T%ang(i5,i4)*T%sqr(i4,i3)/T%Q(i5)%kstr
-!   xx = T%ang(i3,i1) + T%ang(i3,i2)*T%sqr(i2,i1)/T%Q(i1)%kapp
-!   yy = T%sqr(i5,i4)/(T%ang(i3,i4)*T%sqr(i4,i3))
-!   zz = T%ang(i4,i1) + T%ang(i4,i2)*T%sqr(i2,i1)/T%Q(i1)%kapp
-!   rslt = -2*tt/uu*(-ww*xx/MZ+MZ*yy*zz)
-!   end function
-!
-!    function amp_203(T, perm) result(rslt)
-!    type(qomentum_list_type),intent(in) :: T
-!    integer, intent(in) :: perm(:)
-!    complex(fltknd) :: rslt,xx,yy,zz
-!    integer :: i1, i2, i3, i4, i5
-!    !
-!    i1=perm(2) ;i2=4 ;i3=5; i4=3; i5=perm(1)
-!    !
-!    rslt = 0
-!    xx = T%sqr(i4,i5)*T%ang(i1,i2)*T%ang(i1,i2)/T%ang(i2,i3)
-!    yy = T%sqr(i5,i3)+T%ang(i5,i4)*T%sqr(i4,i3)/T%Q(i5)%kstr
-!    zz = (square(T%Q(i1)%k)+T%ang(i2,i1,i2))*(square(T%Q(i5)%k)+T%ang(i4,i5,i4))*T%Q(i1)%kstr*T%Q(i5)%kapp
-!    rslt = xx*yy/zz
-!    end function
-!
-!
-!    function amp_204(T, perm) result(rslt)
-!    type(qomentum_list_type),intent(in) :: T
-!    complex(fltknd) :: rslt,xx,yy,zz, vv
-!    integer :: i1, i2, i3, i4, i5
-!    integer, intent(in) :: perm(:)
-!    !
-!    i1=perm(2) ;i2=4 ;i3=5; i4=3; i5=perm(1)
-!    !
-!    rslt = 0
-!    vv = T%sqr(i4,i5)*T%ang(i3,i2)
-!    xx = T%sqr(i5,i1) + T%ang(i5,i4)*T%sqr(i4,i1)/ T%Q(i5)%kstr
-!    yy = T%ang(i1,i3) + T%ang(i1,i2)*T%sqr(i2,i4)/T%sqr(i3,i4)
-!    zz = (MZ_sq + T%ang(i2, i3, i2))*(square(T%Q(i5)%k)+T%ang(i4,i5,i4)) &
-!       * T%Q(i1)%kapp*T%Q(i1)%kstr*T%Q(i5)%kapp
-!    rslt = vv*xx*yy/zz
-!    end function
-!
-!    function amp_205(T, perm) result(rslt)
-!    type(qomentum_list_type),intent(in) :: T
-!    integer, intent(in) :: perm(:)
-!    complex(fltknd) :: rslt,xx,ww,yy,zz
-!    integer :: i1, i2, i3, i4, i5
-!    !
-!    i1=2 ;i2=4 ;i3=5; i4=3; i5=1
-!    !
-!    call T%set_direction(i3, i2)
-!    rslt = 0
-!    call T%set_direction(i3, i4)
-!    ww = T%ang(i1,i2)*T%sqr(i4,i5)
-!    xx = T%sqr(i5,i1) - T%ang(i5,i4)*T%sqr(i4,i1)/T%Q(i5)%kstr
-!    yy = MZ + T%sqr(i2,i3)*T%ang(i3,i2)/MZ
-!    zz = (MZ*MZ + T%ang(i2, i3, i2))*(-T%Q(i5)%kapp*T%Q(i5)%kstr-T%ang(i4,i5,i4))*T%Q(i5)%kapp*T%Q(i1)%kapp*T%Q(i1)%kstr
-!    if (ww.ne.0.and.xx.ne.0.and.yy.ne.0.and.zz.ne.0) rslt = 2*ww*xx*yy/zz
-!    end function
-!
-
-!    function amp_208(T, perm) result(rslt)
-!    type(qomentum_list_type),intent(in) :: T
-!    integer, intent(in) :: perm(:)
-!    complex(fltknd) :: rslt,xx,ww,yy,zz
-!    integer :: i1, i2, i3, i4, i5
-!    !
-!    i1=2 ;i2=4 ;i3=5; i4=3; i5=1
-!    !
-!    call T%set_direction(i3, i4)
-!    rslt = 0
-!    call T%set_direction(i3, i4)
-!    ww = T%ang(i2,i1)*T%sqr(i4,i5)
-!    xx = T%ang(i5,i1) - T%ang(i5,i2)*T%sqr(i2,i1)/T%Q(i1)%kapp
-!    yy = MZ + T%sqr(i4,i3)*T%ang(i3,i4)/MZ
-!    zz = (MZ*MZ + T%ang(i2, i3, i2))*(-T%Q(i5)%kapp*T%Q(i5)%kstr-T%ang(i4,i5,i4))*T%Q(i5)%kapp*T%Q(i5)%kstr*T%Q(i1)%kstr
-!    if (ww.ne.0.and.xx.ne.0.and.yy.ne.0.and.zz.ne.0) rslt = 2*ww*xx*yy/zz
-!    end function
-!
-!    function amp_209(T, perm) result(rslt)
-!    type(qomentum_list_type),intent(in) :: T
-!    integer, intent(in) :: perm(:)
-!    complex(fltknd) :: rslt,xx,yy,zz, vv
-!    integer :: i1, i2, i3, i4, i5
-!    !
-!    i1=perm(2) ;i2=4 ;i3=5; i4=3; i5=perm(1)
-!    !
-!    rslt = 0
-!    vv = T%sqr(i3,i4)*T%ang(i1,i2)
-!    xx = T%sqr(i3,i5) + T%ang(i2,i4)*T%sqr(i4,i5)/T%ang(i2,i3)
-!    yy = T%ang(i5,i1) + T%ang(i5,i2)*T%sqr(i2,i1)/T%Q(i1)%kapp
-!    zz = (MZ_sq + T%ang(i4, i3, i4))*(square(T%Q(i1)%k)+T%ang(i2,i1,i2))*T%Q(i5)%kapp*T%Q(i5)%kstr*T%Q(i1)%kstr
-!    rslt = vv*xx*yy/zz
-!    end function
-!
-!    function amp_210(T, perm) result(rslt)
-!    type(qomentum_list_type),intent(in) :: T
-!    complex(fltknd) :: rslt,xx, uu,vv, bb, dd, ff, gg
-!    integer :: i1, i2, i3, i4, i5
-!    integer, intent(in) :: perm(:)
-!    !
-!    i1=perm(2) ;i2=4 ;i3=5; i4=3; i5=perm(1)
-!    !
-!    rslt = 0
-!    xx = T%ang(i3,i2)/((MZ_sq+ T%ang(i2,i3,i2)+ T%ang(i4,i3,i4) &
-!       + T%sqr(i2,i4)*T%ang(i4,i2))*(MZ_sq+T%ang(i2,i3,i2)))
-!    uu = T%ang(i1,i5)*T%sqr(i5,i1)/(2*square(T%Q(i1)%k)*square(T%Q(i5)%k))
-!    vv = (T%sqr(i4,i1,i3)-T%sqr(i4,i5,i3))&
-!       + T%sqr(i2,i4)/T%sqr(i3,i4)*(T%sqr(i4,i1,i2)-T%sqr(i4,i5,i2))
-!
-!    bb = -T%ang(i5,i1,i5)/(square(T%Q(i1)%k)*square(T%Q(i5)%k))&
-!    - T%ang(i1,i5)*T%sqr(i5,i1)/(T%ang(i1,i5,i1)*square(T%Q(i5)%k))
-!    dd = T%sqr(i4,i1)*T%ang(i1,i3) + T%sqr(i4,i1)*T%ang(i1,i2)*T%sqr(i2,i4)/T%sqr(i3,i4)
-!
-!    ff = +T%ang(i1,i5,i1)/(square(T%Q(i1)%k)*square(T%Q(i5)%k))&
-!    + T%ang(i1,i5)*T%sqr(i5,i1)/(T%ang(i5,i1,i5)*square(T%Q(i1)%k))
-!    gg = T%sqr(i4,i5)*T%ang(i5,i3) + T%sqr(i4,i5)*T%ang(i5,i2)*T%sqr(i2,i4)/T%sqr(i3,i4)
-!
-!    rslt = xx*(uu*vv + bb*dd + ff*gg)
-!    end function
-
-!
-!    function amp_211(T, perm) result(rslt)
-!    type(qomentum_list_type),intent(in) :: T
-!    integer, intent(in) :: perm(:)
-!    complex(fltknd) :: rslt,xx,yy,zz
-!    integer :: i1, i2, i3, i4, i5
-!    !
-!    i1=2 ;i2=4 ;i3=5; i4=3; i5=1
-!    !
-!    rslt = 0
-!    call T%set_direction(i3, i2)
-!    xx= T%ang(i1,i5)*T%sqr(i5,i1)*T%sqr(i4,i5)*T%ang(i5,i2)
-!    yy =T%ang(i3,i2)*T%sqr(i2,i3)/MZ+MZ
-!    zz = T%Q(i1)%kapp*T%Q(i1)%kstr*(MZ*MZ+T%ang(i2,i3,i2))*T%ang(i5,i1,i5) &
-!       *(MZ*MZ+T%ang(i2,i4)*T%sqr(i4,i2)+T%ang(i2,i3,i2)+T%ang(i4,i3,i4))
-!    if (xx.ne.0.and.yy.ne.0.and.zz.ne.0) rslt = sqrt_2*xx*yy/zz
-!    end function
-
-
-
-!    function amp_214(T, perm) result(rslt)
-!    type(qomentum_list_type),intent(in) :: T
-!    integer, intent(in) :: perm(:)
-!    complex(fltknd) :: rslt,xx,yy,zz
-!    integer :: i1, i2, i3, i4, i5
-!    !
-!    i1=2 ;i2=4 ;i3=5; i4=3; i5=1
-!    !
-!    rslt = 0
-!    call T%set_direction(i3, i4)
-!    xx= T%ang(i1,i5)*T%sqr(i5,i1)*T%sqr(i4,i5)*T%ang(i5,i2)
-!    yy =T%ang(i3,i4)*T%sqr(i4,i3)/MZ+MZ
-!    zz = T%Q(i1)%kapp*T%Q(i1)%kstr*(MZ*MZ+T%ang(i4,i3,i4))*T%ang(i5,i1,i5) &
-!       *(MZ*MZ+T%ang(i2,i4)*T%sqr(i4,i2)+T%ang(i2,i3,i2)+T%ang(i4,i3,i4))
-!    if (xx.ne.0.and.yy.ne.0.and.zz.ne.0) rslt = -sqrt_2*xx*yy/zz
-!    end function
-!
-!  function amp_215(T, perm) result(rslt)
-!    type(qomentum_list_type),intent(in) :: T
-!    complex(fltknd) :: rslt,xx, uu,vv, bb, dd, ff, gg
-!    integer :: i1, i2, i3, i4, i5
-!    integer, intent(in) :: perm(:)
-!    !
-!    i1=perm(2) ;i2=4 ;i3=5; i4=3; i5=perm(1)
-!    !
-!    rslt = 0
-!    xx = T%sqr(i4,i3)/((MZ_sq+ T%ang(i2,i3,i2)+ T%ang(i4,i3,i4) &
-!       + T%sqr(i2,i4)*T%ang(i4,i2))*(MZ_sq+T%ang(i4,i3,i4)))
-!    uu = T%ang(i1,i5)*T%sqr(i5,i1)/(2*square(T%Q(i1)%k)*square(T%Q(i5)%k))
-!    vv = (T%sqr(i3,i1,i2)-T%sqr(i3,i5,i2))&
-!       + T%ang(i2,i4)/T%ang(i2,i3)*(T%sqr(i4,i1,i2)-T%sqr(i4,i5,i2))
-!    bb = -T%ang(i5,i1,i5)/(square(T%Q(i1)%k)*square(T%Q(i5)%k))&
-!    - T%ang(i1,i5)*T%sqr(i5,i1)/(T%ang(i1,i5,i1)*square(T%Q(i5)%k))
-!    dd = T%sqr(i3,i1)*T%ang(i1,i2) + T%sqr(i4,i1)*T%ang(i1,i2)*T%ang(i2,i4)/T%ang(i2,i3)
-!
-!    ff = T%ang(i1,i5,i1)/(square(T%Q(i1)%k)*square(T%Q(i5)%k))&
-!    + T%ang(i1,i5)*T%sqr(i5,i1)/(T%ang(i5,i1,i5)*square(T%Q(i1)%k))
-!    gg = T%sqr(i3,i5)*T%ang(i5,i2) + T%sqr(i4,i5)*T%ang(i5,i2)*T%ang(i2,i4)/T%ang(i2,i3)
-!
-!    rslt = xx*(uu*vv + bb*dd + ff*gg)
-!    end function
-
 

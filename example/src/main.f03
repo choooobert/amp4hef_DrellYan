@@ -114,7 +114,7 @@ program mainMC
     xq = 0.13
     kT2 = 5338.
     fi_k =0.
-    call matrix_element_2x2(S,  xF, qT, M, xq, kT2, fi_k, ampSquared)
+!    call matrix_element_2x2(S,  xF, qT, M, xq, kT2, fi_k, ampSquared)
 !   Gather statistics.
     sumW1 = sumW1 + totalWeight
     sumW2 = sumW2 + totalWeight**2

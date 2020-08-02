@@ -1,22 +1,26 @@
 program mainMC
   use amp4hef
+  use main_DrellYan
   implicit none
   
   integer,parameter :: eventUnit=21
-  real(fltknd),parameter :: alphaWeak = 1./29.
+  real(fltknd),parameter :: alphaWeak = 0.042227735_fltknd
   real(fltknd),parameter :: pi=3.1415926535897932384626433832795_fltknd
   
   logical :: exitLoop
   integer :: Noffshell,Nfinst,Ntotal,ii,process(13)
   integer :: id1,Nperm,NhelConf, NZ
   real(fltknd) :: Ecm,kTsq(2),sHat
-  real(fltknd) :: momenta(0:3,8),directions(0:3,3),ampSquared
-  real(fltknd) :: eventWeight,instWeight,psWeight,cnstWeight,totalWeight
-  real(fltknd) :: partonLumi,alphaStrong,flux
+  real(fltknd) :: momenta(0:3,8),directions(0:3,5),ampSquared
+  real(fltknd) :: eventWeight,matElemData,psWeight,cnstWeight,totalWeight
+  real(fltknd) :: partonLumi,alphaStrong,flux, renomScale
   real(fltknd) :: sumW0,sumW1,sumW2
   character(72) :: eventFile,line
   complex(fltknd) :: amp(64,120),ampStr(64,120),factor
   
+  real(fltknd) :: S, P1(0:3), P2(0:3), xF, qT, M, x1, x2, k1T2, k2T2, z, fi_kappa,fi_k1, &
+                  fi_k2, kT(1:2), xq, fi_k ,kT2
+  real(fltknd) :: k1(0:3), k2(0:3), p3(0:3), p4(0:3), q(0:3)
 ! Obvious.
   call get_command_argument(1,eventFile)
 !
@@ -27,9 +31,12 @@ program mainMC
     if (trim(line).eq.'BEGINOFFILE') exit
     write(*,*) line
   enddo
-  
+
+
+
+
 ! Read the center-of-mass energy,
-! the number of off-shell partons, and the number of final-state partons.
+! the number of off-shell partons, the number of final-state partons and the number of Z bosons
   read(eventUnit,*) Ecm ,Noffshell ,Nfinst, NZ
   Ntotal = Nfinst+2
 
@@ -45,19 +52,19 @@ program mainMC
     * 389379.66_fltknd &
 !   The phase space weight "psWeight" is missing the following factor,
 !   according to the RAMBO convention.
-    * (2*pi)**(4-3*Nfinst) &
+    * (2*pi)**(4-3*(Nfinst)) &
 !   Conversion factor from alphaStrong to g_QCD^2
-    * (4*pi)**Nfinst &
+    * (4*pi)**(Nfinst) &
 !   Average over initial-state spins. The weight factor "partonLumi" includes a
 !   factor 2 for each off-shell gluon to have a uniform definition of cnstWeight.
     / (2*2)
 !   Average over initial-state colors and symmetry factor are included in ampSquared.
-  
+
 ! Initialize statistics.
   sumW0 = 0
   sumW1 = 0
   sumW2 = 0
-  
+
 ! Start the loop over events.
   do
 !   Besides the external momenta, read_event reads the following from the event file:
@@ -74,7 +81,7 @@ program mainMC
 !   as events where the integrand vanishes.
     sumW0 = sumW0+1
     if (eventWeight.eq.0) cycle
-  
+
 !   Determine the flux factor.
     sHat = momSquared( momenta(:,1)+momenta(:,2) )
     kTsq(1:2) = momenta(1,1:2)**2 + momenta(2,1:2)**2
@@ -85,56 +92,69 @@ program mainMC
     directions(2,1:2) = 0
     directions(3,1:2) = momenta(3,1:2)
 
+    directions(0,Ntotal) = 1
+    directions(1,Ntotal) = 0
+    directions(2,Ntotal) = 0
+    directions(3,Ntotal) = 1
+
 !   Evaluate the matrix element. Call matrix_element_b which includes factors to
 !   average over initial-state colors, and the final-state symmetry factor.
     call put_momenta( id1 ,momenta ,directions )
     call matrix_element_b( id1 ,ampSquared )
+    write(*,*) "matrix element ratio :", matElemData/ampSquared
 !   Determine the total weight of the event.
-    totalWeight = cnstWeight / flux * instWeight * psWeight * partonLumi &
-                * ampSquared * alphaStrong**Nfinst *alphaWeak
+    !alphaStrong = 1.
+    totalWeight = cnstWeight / flux * partonLumi &
+                * ampSquared
 
+    S = 14000.
+    xF= 0.01
+    qT= 345.
+    M = 0
+    xq = 0.13
+    kT2 = 5338.
+    fi_k =0.
+    call matrix_element_2x2(S,  xF, qT, M, xq, kT2, fi_k, ampSquared)
 !   Gather statistics.
-    sumW1 = sumW1 + totalWeight
-    sumW2 = sumW2 + totalWeight**2
-
+!    sumW1 = sumW1 + totalWeight
+!    sumW2 = sumW2 + totalWeight**2
+!    write(*,*) '( re-calculated weight )/( weight from file ):' &
+!              ,totalWeight/eventWeight
 !   Compare calculated weight with the number from the file.
-    write(*,*) '( re-calculated weight )/( weight from file ):' &
-              ,totalWeight/eventWeight
+!    write(*,*) '( re-calculated weight )/( weight from file ):' &
+!              ,totalWeight/eventWeight
 !
     !call matrix_element_a( id1 ,ampSquared )
-    !write(*,*) ampSquared 
+    write(*,*) ampSquared
   enddo
 
-! Obvious.  
+! Obvious.
   close(eventUnit)
 
-! Finalize statistics.
-  write(*,*) 'cross section (in nb):',sumW1/sumW0
-  write(*,*) 'error estimate (in %):',100*sqrt((sumW2*sumW0/sumW1**2-1)/(sumW0-1))
- 
- 
+
+
+
   contains
-  
-  
+
+
     subroutine read_event
     read(eventUnit,'(A)') line
     exitLoop = (trim(line).eq.'ENDOFFILE')
     if (exitLoop) return
     read(eventUnit,*) eventWeight
     if (eventWeight.eq.0) return
-    read(eventUnit,*) momenta(0:3,1) 
-    read(eventUnit,*) momenta(0:3,2) 
+    read(eventUnit,*) momenta(0:3,1)
+    read(eventUnit,*) momenta(0:3,2)
     do ii=1,Nfinst
-      read(eventUnit,*) momenta(0:3,ii+2) 
+      read(eventUnit,*) momenta(0:3,ii+2)
     enddo
-    read(eventUnit,*) instWeight,psWeight,partonLumi,alphaStrong
+    read(eventUnit,*) matElemData, partonLumi,alphaStrong, renomScale
     end subroutine
-  
     function momSquared( qq ) result(rslt)
     intent(in) :: qq
     real(fltknd) :: qq(0:3),rslt
     rslt = ( qq(0)-qq(3) )*( qq(0)+qq(3) )- qq(1)*qq(1) - qq(2)*qq(2)
     end function
-  
+
   
 end program

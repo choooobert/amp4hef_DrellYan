@@ -5,7 +5,7 @@ module amp4hef
 
   use amp4hef_io ,only: set_path,split_line
   use amp4hef_qomentum ,only: fltknd ,NsizeProc,NsizeFlavor &
-                             ,init_qomentum ,qomentum_list_type
+                             ,init_qomentum ,qomentum_list_type, square
   use amp4hef_aux ,only: NcolDof ,factorial
   use amp4hef_DrellYan
 
@@ -103,7 +103,6 @@ contains
   Nflavor = 0
   NflavorFinst = 0
 
-	! co te petle robia, przeanalizuj
   do ii=1,Ntot
     ! checks if the particle has a correct color index
     if (process(ii).lt.-NsizeFlavor.or.NsizeFlavor.lt.process(ii)) then
@@ -133,7 +132,7 @@ if(NZ.eq.1) then
 endif
 
 !
-  if (sum(process(1:Ntot)).ne.2) then
+  if (mod(sum(process(1:Ntot)), 2).ne.0) then
     write(*,*) 'ERROR in amp4hef: process not possible'
     stop
   endif
@@ -185,21 +184,76 @@ endif
   integer,intent(in) :: id
   real(fltknd),intent(in) :: momenta(0:3,*) ,directions(0:3,*)
   integer :: ii,Noff2
-  associate( Ntot=>glob(id)%Ntot ,Noff=>glob(id)%Noff )
+
+  real(fltknd) :: P1(0:3), P2(0:3), P(0,3), Pm_wave(0:3), Pp_wave(0:3), M, &
+                  sqrt_S, M_sq, MT, Pp(0:3), Pm(0:3), ap, am, Z(0:3), X(0:3), Y(0:3), q(0:3)
+  associate( Ntot=>glob(id)%Ntot ,Noff=>glob(id)%Noff ,NZ=>glob(id)%NZ)
   Noff2 = Noff+1
   do ii=1,Noff
-    call glob(id)%Q(ii)%fill( momenta(0:3,ii) ,directions(0:3,ii) )
+    call glob(id)%Q(ii)%fill( momenta(0:3,ii), directions(0:3,ii) )
   enddo
   do ii=Noff2,(Ntot-1)
     call glob(id)%Q(ii)%fill( momenta(0:3,ii) )
   enddo
+  if((mom_dot(momenta(0:3,Ntot), momenta(0:3,Ntot)).lt.1E-3)&
+      .and.(mom_dot(momenta(0:3,Ntot), momenta(0:3,Ntot)).gt.-1E-3)) then
+      call glob(id)%Q(Ntot)%fill( momenta(0:3,Ntot))
+  else
+      call glob(id)%Q(Ntot)%fill( momenta(0:3,Ntot), momenta(0:3,Ntot))
+  endif
 
-      call glob(id)%Q(Ntot)%fill( momenta(0:3,Ntot)  )
+
   do ii=1,Noff
     glob(id)%Q(ii)%kstr = glob(id)%ang(ii,ii,Noff2)/glob(id)%sqr(ii,Noff2)
     glob(id)%Q(ii)%kapp = glob(id)%ang(Noff2,ii,ii)/glob(id)%ang(Noff2,ii)
   enddo
+
+  ! when there is a Z boson whch is massive we need to build additional polarization vectors
+  if(NZ.eq.1) then
+  !build polarization vectors
+  sqrt_S = 14000.
+  P1 = [sqrt_S/2., 0._fltknd, 0._fltknd, sqrt_S/2.]
+  P2 = [sqrt_S/2., 0._fltknd, 0._fltknd,-sqrt_S/2.]
+  q(0:3) = momenta(0:3,Ntot)
+  M_sq = square(glob(id)%Q(Ntot)%k)
+  M = sqrt(M_sq)
+  MT =sqrt(M_sq + q(1)**2 + q(2)**2)
+  Pp = P1+P2
+  Pm = P1-P2
+  Pm_wave = Pm - mom_dot(q, Pm)/M_sq*q(0:3)
+  Pp_wave = Pp - mom_dot(q, Pp)/M_sq*q(0:3)
+  ap = mom_dot(q, Pp)
+  am =-mom_dot(q, Pm)
+!  X = (-M**2*(ap*Pp_wave + am*Pm_wave)+(q(1)**2 + q(2)**2)*(am*Pp_wave + ap*Pm_wave))/&
+!        (sqrt(q(1)**2 + q(2)**2)*MT**2*sqrt_S**2)
+!  Z = M*(Pp_wave+Pm_wave)/(ap-am)
+ Y(0) = P1(1)*P2(2)*q(3) + P1(2)*P2(3)*q(1) + P1(3)*P2(1)*q(2) &
+      - P1(1)*P2(3)*q(2) - P1(2)*P2(1)*q(3) - P1(3)*P2(2)*q(1)
+ Y(1) = P1(0)*P2(3)*q(2) + P1(2)*P2(0)*q(3) + P1(3)*P2(2)*q(0) &
+      - P1(0)*P2(2)*q(3) - P1(2)*P2(3)*q(0) - P1(3)*P2(0)*q(2)
+ Y(2) = P1(0)*P2(1)*q(3) + P1(1)*P2(3)*q(0) + P1(3)*P2(0)*q(1) &
+      - P1(0)*P2(3)*q(1) - P1(1)*P2(0)*q(3) + P1(3)*P2(1)*q(0)
+ Y(3) = P1(0)*P2(2)*q(1) + P1(1)*P2(0)*q(2) + P1(2)*P2(1)*q(0) &
+      - P1(0)*P2(1)*q(2) - P1(1)*P2(2)*q(0) - P1(2)*P2(0)*q(1)
+ Y(0:3) = 1/(sqrt(q(1)**2 + q(2)**2))*[0._fltknd,-q(2), q(1), 0._fltknd]
+
+  ! Collins Sopper frame
+  X = -sqrt(M_sq)/((sqrt_S**2)*sqrt(q(1)**2 + q(2)**2)*MT) &
+    *(ap*Pp_wave + am*Pm_wave)
+  Z = 1/(sqrt_S**2 * MT)*(am*Pp_wave + ap*Pm_wave)
+
+  call glob(id)%Q(Ntot+1)%fill( X ,directions(0:3,Ntot) )
+  call glob(id)%Q(Ntot+2)%fill( Y ,directions(0:3,Ntot) )
+  call glob(id)%Q(Ntot+3)%fill( Z ,directions(0:3,Ntot) )
+  endif
   end associate
+  contains
+  function mom_dot(m1, m2)  result(rslt)
+    real(fltknd),intent(in) :: m1(0:3) , m2(0:3)
+    real(fltknd) :: rslt
+
+    rslt = m1(0)*m2(0) - m1(1)*m2(1) - m1(2)*m2(2) - m1(3)*m2(3)
+  end function
   end subroutine
 
 

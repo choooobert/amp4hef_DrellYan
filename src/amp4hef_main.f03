@@ -195,7 +195,14 @@ endif
   do ii=Noff2,(Ntot-1)
     call glob(id)%Q(ii)%fill( momenta(0:3,ii) )
   enddo
-  call glob(id)%Q(Ntot)%fill( momenta(0:3,Ntot), directions(0:3,Ntot))
+  if((mom_dot(momenta(0:3,Ntot), momenta(0:3,Ntot)).lt.1E-3)&
+      .and.(mom_dot(momenta(0:3,Ntot), momenta(0:3,Ntot)).gt.-1E-3)) then
+      call glob(id)%Q(Ntot)%fill( momenta(0:3,Ntot))
+  else
+      call glob(id)%Q(Ntot)%fill( momenta(0:3,Ntot), momenta(0:3,Ntot))
+  endif
+
+
   do ii=1,Noff
     glob(id)%Q(ii)%kstr = glob(id)%ang(ii,ii,Noff2)/glob(id)%sqr(ii,Noff2)
     glob(id)%Q(ii)%kapp = glob(id)%ang(Noff2,ii,ii)/glob(id)%ang(Noff2,ii)

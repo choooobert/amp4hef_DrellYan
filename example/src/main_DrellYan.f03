@@ -109,21 +109,7 @@ contains
     D2 = MT**2-z*M**2
     D1 = M**2*(1-z) + qTabs**2 + z**2*kTabs**2-2*z*kTqT
 
-!    write(*,*) "algebr ", 2*xq**2*S**2*(MT*qTabs/M/z*(z-2)*kTY)
-!    write(*,*) "algebr ", 2*xq**2*S**2*(M/MT*qTabs*z*kTY)
-!    write(*,*) "algebr ", -2/z*M+ MT**2/(z*M)
-
-!AI0**2
-    write(*,*) "algebr ", -xq**2*s**2*(1-z)*(z**2*(kTqT+kTabs**2*qTabs**2/M**2 ) &
-                        +MT**2/M**2*(qTabs**2-2*z*kTqT))/(D1*D2)
-
-!AI+**2
-!    write(*,*) "algebr ", -xq*S*(4*kTY**2+MT**2/(M**2*qTabs**2)*4*kTqT**2 &
-!    +(MT**2/(M**2*z**2)+xg*xq*S/M**2)*qTabs**2 &
-!    +(-xg*xF*S/M**2-2/z*MT**2/M**2-2-xg*xF*S/(M*MT))*2*kTqT &
-!    +4*xg*xF*S-2*xg*xq*S*(1-MT/M)+2*xq/xF*(MT**2-MT*M)-4*M**2 &
-!    -kTabs**2*(-xg*xF*z*qTabs**2*S/(MT*M)**2+2*z*kTqT*(1/M**2-1/(M*MT))-qTabs**2/M**2&
-!    + 2*(z-1)+2*(MT/M-z*M/MT)))
+    write(*,*) "algebr", (xF-xQ)*S
   end subroutine
 
 
@@ -164,12 +150,6 @@ contains
     k1(0:3) = -k1(0:3)
     k2(0:3) = -k2(0:3)
 
-!    write(*,*) "k1: ", k1
-!    write(*,*) "k2: ", k2
-!    write(*,*) " q: ", q
-!    write(*,*) "p3: ", p3
-!    write(*,*) "p4: ", p4
-    write(*,*) "CRC:", k1+k2+q+p3+p4
   end subroutine
 
 

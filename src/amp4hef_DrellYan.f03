@@ -33,7 +33,7 @@ contains
     MZ_sq = square(Tin%Q(Ntot)%k)
     MZ    = sqrt(MZ_sq)
 
-    if((MZ.lt.1E-3).and.(MZ.gt.-1E-3)) then
+    if((MZ_sq.lt.1E-3).and.(MZ_sq.gt.-1E-3)) then
       NhelConf = 4
       rslt(5:9) = [0, 0, 0, 0, 0]
     else
@@ -74,7 +74,9 @@ contains
     MZ_sq = square(Tin%Q(Ntot)%k)
     MZ    = sqrt(MZ_sq)
 
-    if((MZ.lt.1E-3).and.(MZ.gt.-1E-3)) then
+    write(*,*) "MZ ", MZ_sq
+
+    if((MZ_sq.lt.1E-3).and.(MZ_sq.gt.-1E-3)) then
       NhelConf = 4
     else
       NhelConf = 6
@@ -91,9 +93,8 @@ contains
       do jj=1, Nperm
           amp(ii, jj) = amplitude_DrellYan(Tin ,helTable_DrellYan(:,ii), perTable(1:NPerm, jj))
       enddo
-    rslt = rslt + colorSum(Ntot, amp(ii,:), amp(ii,:))
+      rslt = rslt + colorSum(Ntot, amp(ii,:), amp(ii,:))
   enddo
-  rslt = 2*rslt
   end associate
   end function 
 
@@ -131,7 +132,6 @@ contains
   associate( Ntot=>Tin%Ntot ,Noff=>Tin%Noff ,offshell=>Tin%offshell )
     !
     MZ_sq = square(Tin%Q(Ntot)%k)
-    MZ    = sqrt(MZ_sq)
     i = (0._fltknd,1._fltknd)
     rslt = 0
     j2=1 ;j3=3; j4=2 ! indexing for helicity configuration
@@ -140,28 +140,37 @@ contains
     iY = Ntot + 2
     iZ = Ntot + 3
     if(Ntot.eq.5) then
-
     if (helicity(j3).ne.0) then
       rslt_X =  amp_2jet_1(Tin, perm, iX) + amp_2jet_2(Tin, perm, iX) + amp_2jet_3(Tin, perm, iX) &
               + amp_2jet_7(Tin, perm, iX)+  amp_2jet_8(Tin, perm, iX)
       rslt_Y =  amp_2jet_1(Tin, perm, iY) + amp_2jet_2(Tin, perm, iY) + amp_2jet_3(Tin, perm, iY) &
               + amp_2jet_7(Tin, perm, iY)+  amp_2jet_8(Tin, perm, iY)
       if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.-1) then
-        if((MZ.lt.1E-3).and.(MZ.gt.-1E-3)) then
+        if((MZ_sq.lt.1E-3).and.(MZ_sq.gt.-1E-3)) then
+          write(*,*) "I'm in minus"
           rslt = amp_2jet_1m(tin, perm) + amp_2jet_2m(tin, perm) + amp_2jet_7m(Tin, perm)
         else
+          write(*,*) "I'm in minus"
           rslt = (rslt_X - i*rslt_Y)/sqrt_2
         endif
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.1) then
-        if((MZ.lt.1E-3).and.(MZ.gt.-1E-3)) then
+        if((MZ_sq.lt.1E-3).and.(MZ_sq.gt.-1E-3)) then
+          write(*,*) "I'm in plus "
           rslt = amp_2jet_1p(tin, perm) + amp_2jet_3p(tin, perm) + amp_2jet_8p(Tin, perm)
         else
+          write(*,*) "I'm in plus "
           rslt = -(rslt_X + i*rslt_Y)/sqrt_2
         endif
       endif
     else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.0) then
-      rslt =  amp_2jet_1(Tin, perm, iZ) + amp_2jet_2(Tin, perm, iZ) + amp_2jet_3(Tin, perm, iZ) &
+       if((MZ_sq.lt.1E-3).and.(MZ_sq.gt.-1E-3)) then
+         write(*,*) "I'm in zero  "
+         rslt = 0
+       else
+         write(*,*) "I'm in zero  "
+         rslt =  amp_2jet_1(Tin, perm, iZ) + amp_2jet_2(Tin, perm, iZ) + amp_2jet_3(Tin, perm, iZ) &
             + amp_2jet_7(Tin, perm, iZ)+  amp_2jet_8(Tin, perm, iZ)
+       endif
     end if
 
     else if(Ntot.eq.4) then
@@ -169,13 +178,13 @@ contains
       rslt_X =  amp_1jet(Tin, iX)
       rslt_Y =  amp_1jet(Tin, iY)
       if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.-1) then
-        if((MZ.lt.1E-3).and.(MZ.gt.-1E-3)) then
-          rslt = amp_1jet_m(Tin)
+        if((MZ_sq.lt.1E-3).and.(MZ_sq.gt.-1E-3)) then
+          !rslt = amp_1jet_m(Tin)
         else
           rslt = (rslt_X - i*rslt_Y)/sqrt_2
         endif
       else if (helicity(j2).eq.-1.and.helicity(j4).eq.1.and.helicity(j3).eq.1) then
-        if((MZ.lt.1E-3).and.(MZ.gt.-1E-3)) then
+        if((MZ_sq.lt.1E-3).and.(MZ_sq.gt.-1E-3)) then
           rslt = amp_1jet_p(Tin)
         else
           rslt = -(rslt_X + i*rslt_Y)/sqrt_2
@@ -225,9 +234,11 @@ end function
     i1=1 ;i2=2 ;i3=4; i4=3
     !
     rslt = 0
-    vv =T%sqr(i4,i1)*T%sqr(i4,i1)*T%ang(i3,i2)*T%Q(i1)%kstr
-    yy = (MZ_sq+T%ang(i2,i3,i2))*T%sqr(i4,i3)
-    rslt = 2*vv/yy
+    vv =T%sqr(i4,i1)*T%sqr(i4,i1)*T%Q(i1)%kstr
+    yy = T%sqr(i2, i3)*T%sqr(i3,i4)
+    rslt = -vv/yy
+    write(*,*) "spinor ", abs(T%sqr(i4,i1))**2
+
     end function
 
 
@@ -240,10 +251,10 @@ end function
     i1=1 ;i2=2 ;i3=4; i4=3
     !
     rslt = 0
-    call T%set_direction(i3,i2)
-    vv =T%ang(i2,i1)*T%ang(i2,i1)*T%sqr(i3,i4)*T%Q(i1)%kapp
-    yy = (MZ_sq+T%ang(i4,i3,i4))*T%ang(i2,i3)
-    rslt = 2*vv/yy
+    vv =T%ang(i1,i2)*T%ang(i1,i2)*T%Q(i1)%kapp
+    yy = T%ang(i3,i4)*T%ang(i2,i3)
+    rslt = vv/yy
+    write(*,*) "spinor ", abs(T%sqr(i4,i1))**2
     end function
 
 !!!! amplitudes for 2-jet process
@@ -331,6 +342,7 @@ end function
     yy = T%ang(i2,i3) + T%ang(i2,i4)*T%sqr(i4,i5)/T%sqr(i3,i5)
     zz = (square(T%Q(i1)%k)+T%ang(i5,i1,i5))
     rslt = vv*xx*yy/zz
+
     end function
 
 !
@@ -439,7 +451,7 @@ end function
     integer :: i1, i2, i3, i4, i5
     integer, intent(in) :: perm(:), U
     !
-    i1=perm(2) ;i2=4 ;i3=5; i4=3; i5=perm(1)
+    i2=perm(2) ;i5=4 ;i3=5; i4=3; i1=perm(1)
     !
     rslt = 0
     xx = 1/((square(T%Q(i2)%k) +square(T%Q(i1)%k) +twodot(T%Q(i2)%k, T%Q(i1)%k))*(MZ_sq+T%ang(i5,i3,i5)))
@@ -463,7 +475,7 @@ end function
     integer :: i1, i2, i3, i4, i5
     integer, intent(in) :: perm(:)
     !
-    i1=perm(2) ;i2=4 ;i3=5; i4=3; i5=perm(1)
+    i2=perm(2) ;i5=4 ;i3=5; i4=3; i1=perm(1)
     !
     rslt = 0
     xx = T%sqr(i5,i3)/((MZ_sq+ T%ang(i4,i3,i4)+ T%ang(i5,i3,i5) &
@@ -480,6 +492,7 @@ end function
     gg = T%sqr(i3,i1)*T%ang(i1,i4) + T%sqr(i5,i1)*T%ang(i1,i4)*T%ang(i4,i5)/T%ang(i4,i3)
 
     rslt = xx*(uu*vv + bb*dd + ff*gg)*(T%Q(i2)%kapp*T%Q(i2)%kstr*T%Q(i1)%kapp*T%Q(i1)%kstr)
+
     end function
 
 

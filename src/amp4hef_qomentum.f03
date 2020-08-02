@@ -109,7 +109,6 @@ module amp4hef_qomentum
     procedure :: shift_kstr=>list_shift_kstr
     procedure :: cterm=>list_cterm
     procedure :: dterm=>list_dterm
-    procedure :: set_direction
 !    procedure :: s=>list_s
 
   end type
@@ -478,15 +477,6 @@ contains
 ! Below the type-bound routines for the qomentum_list_type, that
 ! ask for integer arguments, 
 ! eg. l%ang(1,2)= l%p(1)%angL*l%p(2)%Rang etc.
-
-  subroutine set_direction( obj ,i3, i1 )
-    class(qomentum_list_type) :: obj
-    integer,intent(in) :: i1,i3
-    real(fltknd):: direction(0:3)
-    direction(0:3) = obj%Q(i3)%momentum(0:3) - square(obj%Q(i3)%k) &
-                   /twodot(obj%Q(i1)%p, obj%Q(i3)%k)* obj%Q(i1)%momentum(0:3)
-    call obj%Q(i3)%fill(obj%Q(i3)%momentum(0:3), direction(0:3))
-  end subroutine
 
   function list_ang( obj ,i1,i2 ) result(rslt)
 ! <12>

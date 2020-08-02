@@ -36,7 +36,7 @@ program mainMC
 
 
 ! Read the center-of-mass energy,
-! the number of off-shell partons, and the number of final-state partons.
+! the number of off-shell partons, the number of final-state partons and the number of Z bosons
   read(eventUnit,*) Ecm ,Noffshell ,Nfinst, NZ
   Ntotal = Nfinst+2
 
@@ -100,7 +100,7 @@ program mainMC
 !   Evaluate the matrix element. Call matrix_element_b which includes factors to
 !   average over initial-state colors, and the final-state symmetry factor.
     call put_momenta( id1 ,momenta ,directions )
-    !call matrix_element_b( id1 ,ampSquared )
+    call matrix_element_b( id1 ,ampSquared )
     write(*,*) "matrix element ratio :", matElemData/ampSquared
 !   Determine the total weight of the event.
     !alphaStrong = 1.
@@ -110,14 +110,14 @@ program mainMC
     S = 14000.
     xF= 0.01
     qT= 345.
-    M = 80.463
+    M = 0
     xq = 0.13
     kT2 = 5338.
     fi_k =0.
-!    call matrix_element_2x2(S,  xF, qT, M, xq, kT2, fi_k, ampSquared)
+    call matrix_element_2x2(S,  xF, qT, M, xq, kT2, fi_k, ampSquared)
 !   Gather statistics.
-    sumW1 = sumW1 + totalWeight
-    sumW2 = sumW2 + totalWeight**2
+!    sumW1 = sumW1 + totalWeight
+!    sumW2 = sumW2 + totalWeight**2
 !    write(*,*) '( re-calculated weight )/( weight from file ):' &
 !              ,totalWeight/eventWeight
 !   Compare calculated weight with the number from the file.
@@ -125,7 +125,7 @@ program mainMC
 !              ,totalWeight/eventWeight
 !
     !call matrix_element_a( id1 ,ampSquared )
-    !write(*,*) ampSquared
+    write(*,*) ampSquared
   enddo
 
 ! Obvious.
